@@ -30,7 +30,7 @@ class PrimeNode(Node):
         return v
 
     def __repr__(self) -> str:
-        return f"Node(name={self.name}, index={self.index}, type={self.type})"
+        return f"PrimeNode(name={self.name}, index={self.index}, type={self.type})"
 
     def __str__(self) -> str:
         return repr(self)
