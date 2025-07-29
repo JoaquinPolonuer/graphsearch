@@ -18,6 +18,7 @@ edges_df = pd.DataFrame(
     {"start_node_index": edge_index[0], "end_node_index": edge_index[1], "type": edge_types}
 )
 nodes_df = pd.DataFrame(node_info.values())
+nodes_df = nodes_df.drop(columns=["id"])
 nodes_df["index"] = nodes_df.index
 nodes_df["details"] = nodes_df["details"].apply(lambda x: json.dumps({} if pd.isna(x) else x))
 
