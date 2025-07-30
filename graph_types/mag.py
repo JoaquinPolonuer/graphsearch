@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from pathlib import Path
 from typing import Self
@@ -10,7 +10,7 @@ import pandas as pd
 
 from config import DATA_DIR
 
-from .graph import Graph, Node
+from graph_types.graph import Graph, Node
 
 
 class PaperNode(Node):
@@ -111,13 +111,8 @@ class MagGraph(Graph):
 
 
 if __name__ == "__main__":
-    graph = MagGraph.load()
-    print(
-        f"Loaded graph: {graph.name} with {len(graph.nodes_df)} nodes and {len(graph.edges_df)} edges"
-    )
-
-    # Example search
-    print(graph.get_node_by_index(0))
-    print(graph.get_node_by_index(1172724))
-    print(graph.get_node_by_index(1104554))
-    print(graph.get_node_by_index(1113255))
+    # Example usage
+    mag_graph = MagGraph.load()
+    node = mag_graph.get_node_by_index(0)
+    distance_df = mag_graph.distance_to_all(node, d=2)
+    print(distance_df)

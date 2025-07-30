@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import json
 import sys
@@ -14,7 +14,7 @@ from pydantic import field_validator
 
 from config import DATA_DIR
 
-from .graph import Graph, Node
+from graph_types.graph import Graph, Node
 
 
 class PrimeNode(Node):
@@ -111,18 +111,7 @@ class PrimeGraph(Graph):
 
 if __name__ == "__main__":
     # Example usage
-    graph = PrimeGraph.load()
-    print(
-        f"Loaded graph: {graph.name} with {len(graph.nodes_df)} nodes and {len(graph.edges_df)} edges"
-    )
-
-    # Example search
-    results = graph.search_nodes("IL27")
-    if results:
-        print(f"Found {len(results)} nodes matching 'IL27':")
-        for node in results:
-            print(node)
-    else:
-        print("No nodes found matching 'IL27'")
-
-    print(graph.get_neighbors(results[0]))
+    prime_graph = PrimeGraph.load()
+    node = prime_graph.get_node_by_index(0)
+    distance_df = prime_graph.distance_to_all(node, d=2)
+    print(distance_df)
