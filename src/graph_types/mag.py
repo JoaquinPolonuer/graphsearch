@@ -17,11 +17,7 @@ from src.keyword_search.index import ElasticsearchIndex
 
 
 class PaperNode(Node):
-    name: str
     abstract: str
-
-    def __repr__(self) -> str:
-        return f"PaperNode(name={self.name}, index={self.index})"
 
     def to_doc(self) -> dict:
         return {
@@ -40,78 +36,17 @@ class PaperNode(Node):
             type=data["type"],
         )
 
-    def __hash__(self):
-        return hash((self.name, self.abstract, self.index, self.type))
-
 
 class AuthorNode(Node):
-    name: str
+    pass
 
-    def __repr__(self) -> str:
-        return f"AuthorNode(name={self.name}, index={self.index})"
-
-    def to_doc(self) -> dict:
-        return {
-            "name": self.name,
-            "index": self.index,
-            "type": self.type,
-        }
-
-    @classmethod
-    def from_doc(cls, data: dict) -> Self:
-        return cls(
-            name=data["name"],
-            index=data["index"],
-            type=data["type"],
-        )
-
-    def __hash__(self):
-        return hash((self.name, self.index, self.type))
 
 class InstitutionNode(Node):
-    name: str
+    pass
 
-    def __repr__(self) -> str:
-        return f"InstitutionNode(name={self.name}, index={self.index})"
 
-    def to_doc(self) -> dict:
-        return {
-            "name": self.name,
-            "index": self.index,
-            "type": self.type,
-        }
-
-    @classmethod
-    def from_doc(cls, data: dict) -> Self:
-        return cls(
-            name=data["name"],
-            index=data["index"],
-            type=data["type"],
-        )
-
-    def __hash__(self):
-        return hash((self.name, self.index, self.type))
-    
 class FieldOfStudyNode(Node):
-    name: str
-
-    def to_doc(self) -> dict:
-        return {
-            "name": self.name,
-            "index": self.index,
-            "type": self.type,
-        }
-
-    @classmethod
-    def from_doc(cls, data: dict) -> Self:
-        return cls(
-            name=data["name"],
-            index=data["index"],
-            type=data["type"],
-        )
-
-    def __hash__(self):
-        return hash((self.name, self.index, self.type))
+    pass
 
 
 class MagGraph(Graph):
@@ -126,26 +61,26 @@ class MagGraph(Graph):
 
         if row["type"] == "author":
             return AuthorNode(
-                name=row["name"],
+                name=row["DisplayName"],
                 index=row["index"],
                 type=row["type"],
             )
         elif row["type"] == "paper":
             return PaperNode(
-                name=row["name"],
+                name=row["title"],
                 abstract=row["abstract"],
                 index=row["index"],
                 type=row["type"],
             )
         elif row["type"] == "institution":
             return InstitutionNode(
-                name=row["name"],
+                name=row["DisplayName"],
                 index=row["index"],
                 type=row["type"],
             )
         elif row["type"] == "field_of_study":
             return FieldOfStudyNode(
-                name=row["name"],
+                name=row["DisplayName"],
                 index=row["index"],
                 type=row["type"],
             )
@@ -164,15 +99,13 @@ class MagGraph(Graph):
 
 
 if __name__ == "__main__":
-    # Example usage
     graph = MagGraph.load()
     print(
         f"Loaded graph: {graph.name} with {len(graph.nodes_df)} nodes and {len(graph.edges_df)} edges"
     )
 
     # Example search
-    graph.get_node_by_index(0)
-    graph.get_node_by_index(100_000)
-
-    graph.get_node_by_index(900_000)
-    graph.get_node_by_index(1_800_000)
+    print(graph.get_node_by_index(0))
+    print(graph.get_node_by_index(1172724))
+    print(graph.get_node_by_index(1104554))
+    print(graph.get_node_by_index(1113255))

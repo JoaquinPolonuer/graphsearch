@@ -1,5 +1,11 @@
 import requests
 import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+
+import requests
+import sys
 import time
 from pathlib import Path
 from config import DATA_DIR
@@ -14,7 +20,6 @@ from src.keyword_search.index import ElasticsearchIndex
 
 
 class PrimeNode(Node):
-    name: str
     source: str
     details: dict
     semantic_embedding: Optional[torch.Tensor] = None
@@ -28,12 +33,6 @@ class PrimeNode(Node):
         if pd.isna(v):
             return {}
         return v
-
-    def __repr__(self) -> str:
-        return f"PrimeNode(name={self.name}, index={self.index}, type={self.type})"
-
-    def __str__(self) -> str:
-        return repr(self)
 
     def to_doc(self) -> dict:
         return {
@@ -52,11 +51,7 @@ class PrimeNode(Node):
             details=json.loads(data["details"]),
             index=data["index"],
             type=data["type"],
-            # semantic_embedding=data.get("semantic_embedding"),
         )
-
-    def __hash__(self):
-        return hash((self.name, self.index, self.type))
 
 
 class PrimeGraph(Graph):
@@ -141,3 +136,5 @@ if __name__ == "__main__":
             print(node)
     else:
         print("No nodes found matching 'IL27'")
+
+    print(graph.get_neighbors(results[0]))
