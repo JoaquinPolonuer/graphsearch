@@ -1,10 +1,6 @@
 import sys
-import time
 from pathlib import Path
 
-import requests
-
-# Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
@@ -27,4 +23,4 @@ index.create(
     },
 )
 
-index.upload_graph(graph, batch_size=100)
+index.upload_graph(graph)
