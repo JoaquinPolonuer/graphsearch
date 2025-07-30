@@ -9,6 +9,7 @@ from typing import Self
 import pandas as pd
 
 from config import DATA_DIR
+
 from .graph import Graph, Node
 
 
@@ -32,56 +33,47 @@ class PaperNode(Node):
             type=data["type"],
         )
 
+    @classmethod
+    def from_df_row(cls, row: pd.Series) -> Self:
+        return cls(
+            name=str(row["title"]),
+            abstract=row["abstract"],
+            index=row["index"],
+            type=row["type"],
+        )
+
 
 class AuthorNode(Node):
-    pass
+    @classmethod
+    def from_df_row(cls, row: pd.Series) -> Self:
+        return cls(
+            name=str(row["DisplayName"]),
+            index=row["index"],
+            type=row["type"],
+        )
 
 
 class InstitutionNode(Node):
-    pass
+    @classmethod
+    def from_df_row(cls, row: pd.Series) -> Self:
+        return cls(
+            name=str(row["DisplayName"]),
+            index=row["index"],
+            type=row["type"],
+        )
 
 
 class FieldOfStudyNode(Node):
-    pass
+    @classmethod
+    def from_df_row(cls, row: pd.Series) -> Self:
+        return cls(
+            name=str(row["DisplayName"]),
+            index=row["index"],
+            type=row["type"],
+        )
 
 
 class MagGraph(Graph):
-
-    def get_node_by_index(self, index: int) -> Node:
-        node_row = self.nodes_df[self.nodes_df["index"] == index]
-
-        if node_row.empty:
-            raise ValueError(f"No node found with index {index}")
-
-        row = node_row.iloc[0]
-
-        if row["type"] == "author":
-            return AuthorNode(
-                name=row["DisplayName"],
-                index=row["index"],
-                type=row["type"],
-            )
-        elif row["type"] == "paper":
-            return PaperNode(
-                name=row["title"],
-                abstract=row["abstract"],
-                index=row["index"],
-                type=row["type"],
-            )
-        elif row["type"] == "institution":
-            return InstitutionNode(
-                name=row["DisplayName"],
-                index=row["index"],
-                type=row["type"],
-            )
-        elif row["type"] == "field_of_study":
-            return FieldOfStudyNode(
-                name=row["DisplayName"],
-                index=row["index"],
-                type=row["type"],
-            )
-        else:
-            raise ValueError(f"Unknown node type: {row['type']}")
 
     @classmethod
     def load(cls) -> Self:
@@ -92,6 +84,30 @@ class MagGraph(Graph):
         edges_df = pd.read_csv(edges_file)
 
         return cls(name="mag", nodes_df=nodes_df, edges_df=edges_df)
+
+    def node_from_df_row(self, row: pd.Series) -> Node:
+        if row["type"] == "author":
+            return AuthorNode.from_df_row(row)
+        elif row["type"] == "paper":
+            return PaperNode.from_df_row(row)
+        elif row["type"] == "institution":
+            return InstitutionNode.from_df_row(row)
+        elif row["type"] == "field_of_study":
+            return FieldOfStudyNode.from_df_row(row)
+
+        raise ValueError(f"Unknown node type: {row['type']}")
+
+    def node_from_doc(self, doc: dict) -> Node:
+        if doc["type"] == "paper":
+            return PaperNode.from_doc(doc)
+        elif doc["type"] == "author":
+            return AuthorNode.from_doc(doc)
+        elif doc["type"] == "institution":
+            return InstitutionNode.from_doc(doc)
+        elif doc["type"] == "field_of_study":
+            return FieldOfStudyNode.from_doc(doc)
+        else:
+            raise ValueError(f"Unknown node type: {doc['type']}")
 
 
 if __name__ == "__main__":

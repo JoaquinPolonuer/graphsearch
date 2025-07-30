@@ -5,6 +5,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
 from index import ElasticsearchIndex
+
 from graph_types.mag import MagGraph
 
 graph = MagGraph.load()
