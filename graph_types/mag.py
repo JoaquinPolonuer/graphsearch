@@ -9,7 +9,7 @@ from typing import Self
 import pandas as pd
 
 from config import DATA_DIR
-from src.graph_types.graph import Graph, Node
+from .graph import Graph, Node
 
 
 class PaperNode(Node):

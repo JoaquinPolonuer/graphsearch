@@ -58,3 +58,6 @@ class Graph(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+        
+    def get_node_by_index(self, index: int) -> Node:
+        raise NotImplementedError("Subclasses must implement get_node_by_index")

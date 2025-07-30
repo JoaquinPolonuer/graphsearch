@@ -13,7 +13,7 @@ import torch
 from pydantic import field_validator
 
 from config import DATA_DIR
-from src.graph_types.graph import Graph, Node
+from .graph import Graph, Node
 from src.keyword_search.index import ElasticsearchIndex
 
 
