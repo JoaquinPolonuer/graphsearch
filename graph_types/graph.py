@@ -109,28 +109,31 @@ class Graph(BaseModel):
         return [self.node_from_doc(hit["_source"]) for hit in hits]
 
     def distance_to_all(self, node: Node, d: Optional[int] = None) -> pd.DataFrame:
-        distances_df = pd.DataFrame({"dst_node_index": [node.index], "distance": [0]})
+        distances_df = pd.DataFrame({"dst_index": [node.index], "distance": [0]})
         current_level = pd.Series([node.index])
         current_distance = 0
-        
+
         while len(current_level) > 0 and (d is None or current_distance < d):
             current_distance += 1
             next_level = []
-            
+
             for node_idx in current_level:
                 neighbor_indices = self.get_neighbors_idx(node_idx)
                 # Filter out already visited nodes using vectorized operations
-                unvisited_neighbors = neighbor_indices[~neighbor_indices.isin(distances_df["dst_node_index"])]
-                
+                unvisited_neighbors = neighbor_indices[
+                    ~neighbor_indices.isin(distances_df["dst_index"])
+                ]
+
                 if len(unvisited_neighbors) > 0:
                     # Create DataFrame for new distances and concat
-                    new_distances = pd.DataFrame({
-                        "dst_node_index": unvisited_neighbors,
-                        "distance": current_distance
-                    })
+                    new_distances = pd.DataFrame(
+                        {"dst_index": unvisited_neighbors, "distance": current_distance}
+                    )
                     distances_df = pd.concat([distances_df, new_distances], ignore_index=True)
                     next_level.extend(unvisited_neighbors.tolist())
-            
-            current_level = pd.Series(next_level).drop_duplicates() if next_level else pd.Series([], dtype=int)
-        
+
+            current_level = (
+                pd.Series(next_level).drop_duplicates() if next_level else pd.Series([], dtype=int)
+            )
+
         return distances_df
