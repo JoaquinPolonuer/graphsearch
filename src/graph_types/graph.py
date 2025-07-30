@@ -1,9 +1,8 @@
-import torch
-import pandas as pd
-from typing import Optional, Self
-from pydantic import BaseModel
+from typing import Self
 
+import pandas as pd
 from fuzzywuzzy import fuzz
+from pydantic import BaseModel
 
 
 def fuzzy_match(name, pattern, threshold=90):

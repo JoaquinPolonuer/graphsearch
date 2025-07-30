@@ -1,12 +1,14 @@
+import json
 import os
 import sys
-import torch
 from pathlib import Path
-import json
+
+import torch
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 import pandas as pd
+
 from config import DATA_DIR
 from graph_types.prime import PrimeGraph
 from llms.entity_extraction import extract_entities_from_question

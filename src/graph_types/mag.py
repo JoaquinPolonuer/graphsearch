@@ -1,19 +1,15 @@
-import requests
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-import time
-from config import DATA_DIR
-import json
-from typing import Optional, Self
-import torch
-import pandas as pd
 from pathlib import Path
-from pydantic import BaseModel, field_validator
-from src.graph_types.graph import Node, Graph
-from src.keyword_search.index import ElasticsearchIndex
+from typing import Self
+
+import pandas as pd
+
+from config import DATA_DIR
+from src.graph_types.graph import Graph, Node
 
 
 class PaperNode(Node):

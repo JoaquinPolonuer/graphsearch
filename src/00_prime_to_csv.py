@@ -1,8 +1,9 @@
-import os
-import torch
-import pickle
-import pandas as pd
 import json
+import os
+import pickle
+
+import pandas as pd
+import torch
 
 edge_index = torch.load(f"data/00_raw_stark_graphs/prime/edge_index.pt")
 edge_types = torch.load(f"data/00_raw_stark_graphs/prime/edge_types.pt")

@@ -1,21 +1,19 @@
-import requests
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-import requests
-import sys
-import time
-from pathlib import Path
-from config import DATA_DIR
 import json
-from typing import Optional, Self
-import torch
-import pandas as pd
+import sys
 from pathlib import Path
-from pydantic import BaseModel, field_validator
-from src.graph_types.graph import Node, Graph
+from typing import Optional, Self
+
+import pandas as pd
+import torch
+from pydantic import field_validator
+
+from config import DATA_DIR
+from src.graph_types.graph import Graph, Node
 from src.keyword_search.index import ElasticsearchIndex
 
 

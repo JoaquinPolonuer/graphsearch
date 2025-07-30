@@ -1,5 +1,7 @@
 import pandas as pd
+
 from src.graph_types.mag import MagGraph
+
 
 class TestMagGraph:
     def test_load_graph_and_get_node_by_index(self):

@@ -1,5 +1,7 @@
 import pandas as pd
+
 from src.graph_types.prime import PrimeGraph
+
 
 class TestPrimeGraph:
     def test_load_graph_and_get_node_by_index(self):

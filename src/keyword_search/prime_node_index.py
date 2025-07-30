@@ -1,14 +1,15 @@
-import requests
 import sys
 import time
 from pathlib import Path
+
+import requests
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
-from src.graph_types.prime import PrimeGraph
 from keyword_search.index import ElasticsearchIndex
+from src.graph_types.prime import PrimeGraph
 
 graph = PrimeGraph.load()
 index = ElasticsearchIndex(name=f"{graph.name}_index")

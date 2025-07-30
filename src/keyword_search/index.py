@@ -1,7 +1,8 @@
 import json
-import requests
 import sys
 from pathlib import Path
+
+import requests
 from pydantic import BaseModel
 
 # Add project root to path
