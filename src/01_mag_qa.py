@@ -54,10 +54,10 @@ for question_index, row in qas.iloc[:100].iterrows():
 
     candidate_df = candidate_df[candidate_df["type"] == "paper"]
 
-    candidate_df["embedding"] = candidate_df["index"].apply(lambda index: doc_embeddings[index][0])
+    candidate_df["embedding"] = candidate_df["index"].apply(lambda index: doc_embeddings[index])
     candidate_df["similarity"] = candidate_df["embedding"].apply(
         lambda embedding: torch.matmul(
-            torch.tensor(question_embedding), torch.tensor(embedding).T
+            question_embedding.detach().clone(), embedding.detach().clone().T
         ).item()
     )
 
@@ -84,3 +84,5 @@ for question_index, row in qas.iloc[:100].iterrows():
     with open(results_dir / f"{question_index}.json", "w") as f:
         json.dump(log, f, indent=4)
         candidate_df.to_csv(results_dir / f"{question_index}_candidates.csv", index=False)
+
+    print(f"Processed question {question_index}")
