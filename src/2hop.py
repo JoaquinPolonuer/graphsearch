@@ -8,16 +8,20 @@ import torch
 sys.path.append(str(Path(__file__).parent.parent))
 
 from config import DATA_DIR
-from llms.entity_extraction import extract_entities_from_question
+from llms.entity_extraction import (
+    extract_entities_from_question,
+    extract_question_answer_type,
+    select_starting_node,
+)
 from utils import load_graph_and_qas, load_embeddings
 from algorithms import mapped_nodes_by_relevance
 
-graph_name = "mag"
+graph_name = "prime"
 
 graph, qas = load_graph_and_qas(graph_name)
 doc_embeddings, query_embeddings = load_embeddings(graph.name)
 
-results_dir = DATA_DIR / f"connectedness/{graph.name}_logs_2hop"
+results_dir = DATA_DIR / f"connectedness/{graph.name}_logs_2hop_filter_answer_type_and_starting_node"
 os.makedirs(results_dir, exist_ok=True)
 for question_index, row in qas.iloc[:1000].iterrows():
     question = row["question"]
@@ -30,12 +34,16 @@ for question_index, row in qas.iloc[:1000].iterrows():
         graph, question_embedding, doc_embeddings, entities
     )
 
-    starting_node = sorted_central_nodes[0]
+    starting_node = select_starting_node(question, sorted_central_nodes) # sorted_central_nodes[0]
 
     candidates = list(graph.get_khop_idx(starting_node, k=2))
 
     if graph.name == "mag":
-        candidates = graph.filter_indices_by_type(candidates, type="paper")
+        answer_type = "paper"
+    elif graph.name == "prime":
+        answer_type = extract_question_answer_type(question, graph.node_types)
+
+    candidates = graph.filter_indices_by_type(candidates, type=answer_type)
 
     sorted_candidates = sorted(
         candidates,
@@ -48,6 +56,8 @@ for question_index, row in qas.iloc[:1000].iterrows():
     log = {
         "question": question,
         "entities": [entity for entity in entities],
+        "answer_type": answer_type,
+        "starting_node_index": starting_node.index,
         "sorted_central_nodes_indices": [node.index for node in sorted_central_nodes],
         "sorted_candidates_indices": [int(i) for i in sorted_candidates],
         "answer_indices": answer_indices,
