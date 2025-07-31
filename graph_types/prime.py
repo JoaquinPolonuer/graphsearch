@@ -113,5 +113,5 @@ if __name__ == "__main__":
     # Example usage
     prime_graph = PrimeGraph.load()
     node = prime_graph.get_node_by_index(0)
-    distance_df = prime_graph.distance_to_all(node, d=2)
+    distance_df = prime_graph.get_khop_idx(node, k=1)
     print(distance_df)

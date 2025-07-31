@@ -11,11 +11,8 @@ def parse_response(response: str) -> list[str]:
         try:
             entities = json.loads(response.replace("'", '"'))
         except Exception:
-            # As a last resort, try to eval safely
-            import ast
-
             try:
-                entities = ast.literal_eval(response)
+                entities = response.replace("[", "").replace("]", "").split(", ")
             except Exception:
                 print(f"Failed to parse entities from response: {response}")
                 entities = []

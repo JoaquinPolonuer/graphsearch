@@ -114,5 +114,5 @@ if __name__ == "__main__":
     # Example usage
     mag_graph = MagGraph.load()
     node = mag_graph.get_node_by_index(0)
-    distance_df = mag_graph.distance_to_all(node, d=2)
+    second_hop = mag_graph.get_khop_idx(node, k=2)
     print(distance_df)

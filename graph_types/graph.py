@@ -82,7 +82,7 @@ class Graph(BaseModel):
         row = node_row.iloc[0]
         return self.node_from_df_row(row)
 
-    def get_neighbors_idx(self, node_index: int) -> pd.Series:
+    def get_neighbors_idx(self, node_index: int) -> set[int]:
         neighbors_df_1 = self.edges_df[self.edges_df["start_node_index"] == node_index][
             "end_node_index"
         ].rename("neighbor_index_1")
@@ -95,16 +95,54 @@ class Graph(BaseModel):
             .rename("neighbor_index")
             .reset_index(drop=True)
         )
-        neighbor_indices_with_types = pd.merge(
-            neighbor_indices.reset_index(drop=True),
-            self.nodes_df[["index", "type"]],
-            left_on="neighbor_index",
-            right_on="index",
-        )
 
-        return neighbor_indices_with_types[neighbor_indices_with_types["type"] != "field_of_study"][
-            "neighbor_index"
-        ]
+        if self.name == "mag":
+            neighbor_indices = pd.merge(
+                neighbor_indices.reset_index(drop=True),
+                self.nodes_df[["index", "type"]],
+                left_on="neighbor_index",
+                right_on="index",
+            )
+            return set(
+                neighbor_indices[neighbor_indices["type"] != "field_of_study"][
+                    "neighbor_index"
+                ].values
+            )
+        else:
+            return set(neighbor_indices.values)
+
+    def get_khop_idx(self, node: Node, k: int) -> set[int]:
+        first_hop_neighbors = self.get_neighbors_idx(node.index)
+        if k == 1:
+            return first_hop_neighbors
+
+        if k == 2:
+            second_hop_neighbors = pd.Series(dtype=int)
+
+            first_hop_neighbors = pd.Series(list(first_hop_neighbors), name="neighbor_index")
+            neighbors_df_1 = (
+                self.edges_df[self.edges_df["start_node_index"].isin(first_hop_neighbors)][
+                    "end_node_index"
+                ]
+                .rename("neighbor_index_1")
+                .drop_duplicates()
+            )
+            neighbors_df_2 = (
+                self.edges_df[self.edges_df["end_node_index"].isin(first_hop_neighbors)][
+                    "start_node_index"
+                ]
+                .rename("neighbor_index_2")
+                .drop_duplicates()
+            )
+
+            second_hop_neighbors = (
+                pd.concat([first_hop_neighbors, neighbors_df_1, neighbors_df_2])
+                .drop_duplicates()
+                .reset_index(drop=True)
+            )
+
+            return set(second_hop_neighbors.values)
+        raise ValueError(f"Unsupported value for k: {k}. Only 1 or 2 are supported.")
 
     def get_neighbors(self, node: Node) -> set[Node]:
         neighbor_indices = self.get_neighbors_idx(node.index)
