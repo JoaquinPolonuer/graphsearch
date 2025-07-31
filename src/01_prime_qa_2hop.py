@@ -35,6 +35,7 @@ for question_index, row in qas.iloc[:1000].iterrows():
     candidates = list(graph.get_khop_idx(starting_node, k=2))
 
     if graph.name == "mag":
+        #NOTE: This line is very slow, we should optimize
         candidates = [c for c in candidates if graph.get_node_by_index(c).type == "paper"]
 
     sorted_candidates = sorted(
@@ -48,8 +49,8 @@ for question_index, row in qas.iloc[:1000].iterrows():
     log = {
         "question": question,
         "entities": [entity for entity in entities],
-        "sorted_central_nodes": [str(node) for node in sorted_central_nodes],
-        "sorted_candidates": [int(i) for i in sorted_candidates],
+        "sorted_central_nodes_indices": [node.index for node in sorted_central_nodes],
+        "sorted_candidates_indices": [int(i) for i in sorted_candidates],
         "answer_indices": answer_indices,
     }
 
