@@ -67,6 +67,12 @@ class Graph(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    @property
+    def node_types(self) -> set[str]:
+        if not hasattr(self, "_node_types_cache"):
+            self._node_types_cache = set(self.nodes_df["type"].unique())
+        return self._node_types_cache
+
     def node_from_doc(self, data: dict) -> Node:
         raise NotImplementedError("Subclasses must implement node_from_doc")
 
