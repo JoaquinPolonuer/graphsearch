@@ -1,19 +1,17 @@
 import os
 import json
 import pandas as pd
+import pickle
 
 from litellm import completion
 from graph_types.graph import Node
 
-if os.path.exists("data/02_qa_datasets/entity_extraction_cache.csv"):
-    QUESTION_ENTITY_CACHE = pd.read_csv("data/02_qa_datasets/entity_extraction_cache.csv")
+if not os.path.exists("data/cache/llm_calls_cache.pkl"):
+    LLM_CALLS_CACHE = {}
 else:
-    QUESTION_ENTITY_CACHE = pd.DataFrame(columns=["question", "entities"])
-
-if not os.path.exists("data/02_qa_datasets/answer_type_cache.csv"):
-    ANSWER_TYPE_CACHE = pd.DataFrame(columns=["question", "answer_type"])
-else:
-    ANSWER_TYPE_CACHE = pd.read_csv("data/02_qa_datasets/answer_type_cache.csv")
+    os.makedirs("data/cache", exist_ok=True)
+    with open("data/cache/llm_calls_cache.pkl", "rb") as f:
+        LLM_CALLS_CACHE = pickle.load(f)
 
 
 def simple_completion(system_prompt: str, user_prompt: str) -> str:
@@ -23,11 +21,21 @@ def simple_completion(system_prompt: str, user_prompt: str) -> str:
         {"role": "user", "content": user_prompt},
     ]
 
+    messages_as_str = str(messages)
+
+    if LLM_CALLS_CACHE.get(messages_as_str):
+        print("Using cached llm response")
+        return LLM_CALLS_CACHE[messages_as_str]
+
     response = (
         completion(model="azure/gpt-4o-1120", messages=messages, temperature=0.1, max_tokens=500)
         .choices[0]
         .message.content.strip()
     )
+
+    LLM_CALLS_CACHE[messages_as_str] = response
+    with open("data/cache/llm_calls_cache.pkl", "wb") as f:
+        pickle.dump(LLM_CALLS_CACHE, f)
 
     return response
 
@@ -50,53 +58,26 @@ def parse_response(response: str) -> list[str]:
 
 
 def extract_entities_from_question(question: str) -> list[str]:
-
-    if question in QUESTION_ENTITY_CACHE["question"].values:
-        cached_entities = QUESTION_ENTITY_CACHE[QUESTION_ENTITY_CACHE["question"] == question][
-            "entities"
-        ].values[0]
-        print("Using cached entities for question:", question[:30], "...")
-        return json.loads(cached_entities)
-
     system_prompt = """
     You need to extract the most specific entities from the question.
     Return only the entities as a list, no other text.
     """
-
     user_prompt = f"Extract entities from this question: {question}"
 
     response = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
     entities = parse_response(response)
-
-    QUESTION_ENTITY_CACHE.loc[len(QUESTION_ENTITY_CACHE)] = [question, json.dumps(entities)]
-    QUESTION_ENTITY_CACHE.to_csv("data/02_qa_datasets/entity_extraction_cache.csv", index=False)
     return entities
 
 
-def extract_question_answer_type(
-    question: str, node_types: set[str], model: str = "azure/gpt-4o-1120"
-) -> str:
-    if question in ANSWER_TYPE_CACHE["question"].values:
-        cached_answer_type = ANSWER_TYPE_CACHE[ANSWER_TYPE_CACHE["question"] == question][
-            "answer_type"
-        ].values[0]
-        print("Using cached answer type for question:", question[:30], "...")
-        return cached_answer_type
-
+def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     system_prompt = f"""
     Extract the answer type from the question based on the node types.
     This is to discard the answers that are not semantically relevant to the question.
     The possible node types are: {node_types}.
     Return only the answer type as a string, no other text.
     """
-
     user_prompt = f"Extract the answer type from this question: {question}"
-
     answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
-    if answer_type not in node_types:
-        print(f"Extracted answer type '{answer_type}' is not in the node types: {node_types}.")
-        answer_type = "unknown"
-
     return answer_type
 
 
@@ -125,5 +106,5 @@ def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Nod
 if __name__ == "__main__":
     # Example usage
     question = "What are the symptoms of diabetes?"
-    entities = extract_entities_from_question(question)
+    entities = extract_question_answer_type(question, ["drug", "disease", "symptom"])
     print(f"Extracted entities: {entities}")

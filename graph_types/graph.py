@@ -68,9 +68,9 @@ class Graph(BaseModel):
         arbitrary_types_allowed = True
 
     @property
-    def node_types(self) -> set[str]:
+    def node_types(self) -> list[str]:
         if not hasattr(self, "_node_types_cache"):
-            self._node_types_cache = set(self.nodes_df["type"].unique())
+            self._node_types_cache = list(self.nodes_df["type"].unique())
         return self._node_types_cache
 
     def node_from_doc(self, data: dict) -> Node:
