@@ -12,14 +12,14 @@ from llms.entity_extraction import extract_entities_from_question
 from utils import load_graph_and_qas, load_embeddings
 from algorithms import mapped_nodes_by_relevance
 
-graph_name = "mag"
+graph_name = "prime"
 
 graph, qas = load_graph_and_qas(graph_name)
 doc_embeddings, query_embeddings = load_embeddings(graph.name)
 
 results_dir = DATA_DIR / f"connectedness/{graph.name}_logs_2hop"
 os.makedirs(results_dir, exist_ok=True)
-for question_index, row in qas.iloc[0:100].iterrows():
+for question_index, row in qas.iloc[:1000].iterrows():
     question = row["question"]
     question_embedding = query_embeddings[question_index][0]
     answer_indices = json.loads(row["answer_indices"])
