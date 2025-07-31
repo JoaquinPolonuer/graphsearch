@@ -159,3 +159,14 @@ class Graph(BaseModel):
         response = ElasticsearchIndex(name=f"{self.name}_index").search(query=query, k=k)
         hits = response.get("hits", {}).get("hits", [])
         return [self.node_from_doc(hit["_source"]) for hit in hits], [hit["_score"] for hit in hits]
+
+    def filter_indices_by_type(self, indices: list[int], type: str) -> list[int]:
+        indices_df = pd.DataFrame(indices, columns=["index"])
+        indices_df = pd.merge(
+            indices_df,
+            self.nodes_df[["index", "type"]],
+            on="index",
+            how="left",
+        )
+        filtered_indices = indices_df[indices_df["type"] == type]["index"].tolist()
+        return filtered_indices

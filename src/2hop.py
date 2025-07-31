@@ -12,7 +12,7 @@ from llms.entity_extraction import extract_entities_from_question
 from utils import load_graph_and_qas, load_embeddings
 from algorithms import mapped_nodes_by_relevance
 
-graph_name = "prime"
+graph_name = "mag"
 
 graph, qas = load_graph_and_qas(graph_name)
 doc_embeddings, query_embeddings = load_embeddings(graph.name)
@@ -35,8 +35,7 @@ for question_index, row in qas.iloc[:1000].iterrows():
     candidates = list(graph.get_khop_idx(starting_node, k=2))
 
     if graph.name == "mag":
-        #NOTE: This line is very slow, we should optimize
-        candidates = [c for c in candidates if graph.get_node_by_index(c).type == "paper"]
+        candidates = graph.filter_indices_by_type(candidates, type="paper")
 
     sorted_candidates = sorted(
         candidates,
