@@ -6,15 +6,17 @@ import pickle
 from litellm import completion
 from graph_types.graph import Node
 
+
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
     LLM_CALLS_CACHE = {}
-else:
     os.makedirs("data/cache", exist_ok=True)
-    with open("data/cache/llm_calls_cache.pkl", "rb") as f:
-        LLM_CALLS_CACHE = pickle.load(f)
+    with open("data/cache/llm_calls_cache.pkl", "wb") as f:
+        pickle.dump(LLM_CALLS_CACHE, f)
 
 
 def simple_completion(system_prompt: str, user_prompt: str) -> str:
+    with open("data/cache/llm_calls_cache.pkl", "rb") as f:
+        LLM_CALLS_CACHE = pickle.load(f)
 
     messages = [
         {"role": "system", "content": system_prompt},
