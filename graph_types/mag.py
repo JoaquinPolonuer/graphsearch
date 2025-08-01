@@ -77,13 +77,7 @@ class MagGraph(Graph):
 
     @classmethod
     def load(cls) -> Self:
-        nodes_file = DATA_DIR / "01_csv_graphs/mag/nodes.csv"
-        edges_file = DATA_DIR / "01_csv_graphs/mag/edges.csv"
-
-        nodes_df = pd.read_csv(nodes_file, low_memory=False)
-        edges_df = pd.read_csv(edges_file, low_memory=False)
-
-        return cls(name="mag", nodes_df=nodes_df, edges_df=edges_df)
+        return super().load(name="mag")
 
     def node_from_df_row(self, row: pd.Series) -> Node:
         if row["type"] == "author":
@@ -115,4 +109,3 @@ if __name__ == "__main__":
     mag_graph = MagGraph.load()
     node = mag_graph.get_node_by_index(0)
     second_hop = mag_graph.get_khop_idx(node, k=2)
-    print(distance_df)

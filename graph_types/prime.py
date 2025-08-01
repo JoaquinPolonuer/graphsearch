@@ -94,13 +94,7 @@ class PrimeGraph(Graph):
 
     @classmethod
     def load(cls) -> Self:
-        nodes_file = DATA_DIR / "01_csv_graphs/prime/nodes.csv"
-        edges_file = DATA_DIR / "01_csv_graphs/prime/edges.csv"
-
-        nodes_df = pd.read_csv(nodes_file)
-        edges_df = pd.read_csv(edges_file)
-
-        return cls(name="prime", nodes_df=nodes_df, edges_df=edges_df)
+        return super().load(name="prime")
 
     def node_from_doc(self, doc: dict) -> PrimeNode:
         return PrimeNode.from_doc(doc)

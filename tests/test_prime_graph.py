@@ -17,7 +17,7 @@ class TestPrimeGraph:
 
     def test_find_node_by_name(self, prime_graph):
         IL27_node = prime_graph.get_node_by_index(34082)
-        nodes = prime_graph.search_nodes("IL27")
+        nodes, scores = prime_graph.search_nodes("IL27")
         assert IL27_node in nodes
 
     def test_get_neighbors(self, prime_graph):
