@@ -14,13 +14,14 @@ from llms.entity_extraction import (
     select_starting_node,
 )
 from utils import load_graph_and_qas, load_embeddings
-from algorithms import mapped_nodes_by_relevance
+from algorithms import get_central_nodes_and_starting_node
 
-graph, qas = load_graph_and_qas("amazon")
-doc_embeddings, query_embeddings = load_embeddings(graph.name)
+graph_name = "amazon"
+doc_embeddings, query_embeddings = load_embeddings(graph_name)
+graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = (
-    DATA_DIR / f"experiments/{graph.name}_logs_2hop_filter_answer_type_and_starting_node_name"
+    DATA_DIR / f"experiments/{graph.name}_one_node_per_entity_and_semantic_sort"
 )
 os.makedirs(results_dir, exist_ok=True)
 for question_index, row in qas.iloc[:1000].iterrows():
@@ -30,11 +31,9 @@ for question_index, row in qas.iloc[:1000].iterrows():
 
     entities = extract_entities_from_question(question)
 
-    sorted_central_nodes = mapped_nodes_by_relevance(
-        graph, question_embedding, doc_embeddings, entities
+    sorted_central_nodes, starting_node = get_central_nodes_and_starting_node(
+        graph, question, question_embedding, doc_embeddings, entities
     )
-
-    starting_node = select_starting_node(question, sorted_central_nodes)  # sorted_central_nodes[0]
 
     candidates = list(graph.get_khop_idx(starting_node, k=2))
 
