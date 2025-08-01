@@ -80,8 +80,8 @@ class MagGraph(Graph):
         nodes_file = DATA_DIR / "01_csv_graphs/mag/nodes.csv"
         edges_file = DATA_DIR / "01_csv_graphs/mag/edges.csv"
 
-        nodes_df = pd.read_csv(nodes_file)
-        edges_df = pd.read_csv(edges_file)
+        nodes_df = pd.read_csv(nodes_file, low_memory=False)
+        edges_df = pd.read_csv(edges_file, low_memory=False)
 
         return cls(name="mag", nodes_df=nodes_df, edges_df=edges_df)
 
