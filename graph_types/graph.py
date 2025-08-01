@@ -3,6 +3,7 @@ from typing import Self, Optional
 import pandas as pd
 from fuzzywuzzy import fuzz
 from pydantic import BaseModel
+from config import DATA_DIR
 
 
 def fuzzy_match(name, pattern, threshold=90):
@@ -72,6 +73,16 @@ class Graph(BaseModel):
         if not hasattr(self, "_node_types_cache"):
             self._node_types_cache = list(self.nodes_df["type"].unique())
         return self._node_types_cache
+
+    @classmethod
+    def load(cls, name) -> Self:
+        nodes_file = DATA_DIR / f"graphs/parquet/{name}/nodes.parquet"
+        edges_file = DATA_DIR / f"graphs/parquet/{name}/edges.parquet"
+
+        nodes_df = pd.read_parquet(nodes_file)
+        edges_df = pd.read_parquet(edges_file)
+
+        return cls(name=name, nodes_df=nodes_df, edges_df=edges_df)
 
     def node_from_doc(self, data: dict) -> Node:
         raise NotImplementedError("Subclasses must implement node_from_doc")

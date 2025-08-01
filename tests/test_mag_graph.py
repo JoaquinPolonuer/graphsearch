@@ -36,7 +36,7 @@ class TestMagGraph:
 
     def test_find_node_by_name(self, mag_graph):
         alexander_node = mag_graph.get_node_by_index(0)
-        nodes = mag_graph.search_nodes("Alexander Wagenpfahl")
+        nodes, scores = mag_graph.search_nodes("Alexander Wagenpfahl")
         assert alexander_node in nodes
 
     def test_get_neighbors(self, mag_graph):
