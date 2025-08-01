@@ -56,16 +56,23 @@ edges_df.to_csv("data/01_csv_graphs/amazon/edges.csv", index=False)
 del edges_df, edges_df_brand_category_color
 
 with open(f"data/00_raw_stark_graphs/amazon/node_info.pkl", "rb") as f:
+    print("Loading node info...")
     node_info = pickle.load(f)
-nodes_df = pd.DataFrame(node_info.values())
+nodes_df = pd.DataFrame(node_info.values(), index=node_info.keys())
+nodes_df["index"] = nodes_df.index
 del node_info
 
 with open(f"data/00_raw_stark_graphs/amazon/cache/brand-category-color/node_info.pkl", "rb") as f:
+    print("Loading node info for brand-category-color...")
     node_info_brand_category_color = pickle.load(f)
-nodes_df_brand_category_color = pd.DataFrame(node_info_brand_category_color.values())
+nodes_df_brand_category_color = pd.DataFrame(
+    node_info_brand_category_color.values(), index=node_info_brand_category_color.keys()
+)
+nodes_df_brand_category_color["index"] = nodes_df_brand_category_color.index
 del node_info_brand_category_color
 
 
-nodes_df = pd.concat([nodes_df, nodes_df_brand_category_color], ignore_index=True)
-nodes_df["index"] = nodes_df.index
+nodes_df = pd.concat([nodes_df, nodes_df_brand_category_color], ignore_index=True).drop_duplicates(
+    "index"
+)
 nodes_df.to_csv("data/01_csv_graphs/amazon/nodes.csv", index=False)
