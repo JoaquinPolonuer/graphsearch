@@ -2,8 +2,7 @@ import torch
 import pickle
 import pandas as pd
 
-edges_df = pd.read_csv("data/01_csv_graphs/amazon/edges.csv", low_memory=False)
-nodes_df = pd.read_csv("data/01_csv_graphs/amazon/nodes.csv", low_memory=False)
+nodes_df = pd.read_parquet("data/graphs/parquet/amazon/nodes.parquet")
 
 node_types_brand_category_color = torch.load(
     f"data/00_raw_stark_graphs/amazon/cache/brand-category-color/node_types.pt"
@@ -17,4 +16,4 @@ with open(
     ]
 nodes_df["type"] = node_types_brand_category_color
 
-nodes_df.drop(columns="review").to_csv("data/01_csv_graphs/amazon/nodes_reduced.csv", index=False)
+nodes_df.to_parquet("data/graphs/parquet/amazon/nodes.parquet")
