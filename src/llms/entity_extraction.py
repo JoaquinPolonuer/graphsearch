@@ -80,7 +80,7 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
     return answer_type
 
-
+#NOTE: I think that asking for the index of the node is not the best way to do this.
 def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Node:
     system_prompt = f"""
     We are working on a graph rag task.
