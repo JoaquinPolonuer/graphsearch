@@ -21,11 +21,11 @@ def simple_completion(system_prompt: str, user_prompt: str) -> str:
         {"role": "user", "content": user_prompt},
     ]
 
-    messages_as_str = str(messages)
+    cache_key = f"{system_prompt.strip()}_{user_prompt.strip()}"
 
-    if LLM_CALLS_CACHE.get(messages_as_str):
+    if LLM_CALLS_CACHE.get(cache_key):
         print("Using cached llm response")
-        return LLM_CALLS_CACHE[messages_as_str]
+        return LLM_CALLS_CACHE[cache_key]
 
     response = (
         completion(model="azure/gpt-4o-1120", messages=messages, temperature=0.1, max_tokens=500)
@@ -33,7 +33,7 @@ def simple_completion(system_prompt: str, user_prompt: str) -> str:
         .message.content.strip()
     )
 
-    LLM_CALLS_CACHE[messages_as_str] = response
+    LLM_CALLS_CACHE[cache_key] = response
     with open("data/cache/llm_calls_cache.pkl", "wb") as f:
         pickle.dump(LLM_CALLS_CACHE, f)
 
@@ -80,7 +80,8 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
     return answer_type
 
-#NOTE: I think that asking for the index of the node is not the best way to do this.
+
+# NOTE: I think that asking for the index of the node is not the best way to do this.
 def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Node:
     system_prompt = f"""
     We are working on a graph rag task.
@@ -89,7 +90,7 @@ def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Nod
     You will be given a list of nodes sorted by lexical/semantic similarity, and your task is to select the node to start the search from.
     It's likely that the starting node is the first node in the list, but this is not always the case.
     Select the node that is the most explicitly mentioned in the question, if there is more than one, select the most specific one.
-    Return the index of the selected node in the list, nothing else
+    Return the name of the selected node in the list, nothing else
     """
 
     candidate_nodes = ",\n".join([node.name for node in sorted_central_nodes])
@@ -99,8 +100,12 @@ def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Nod
     Select the starting node from the sorted nodes.
     """
 
-    i = int(simple_completion(system_prompt=system_prompt, user_prompt=user_prompt))
-    return sorted_central_nodes[i]
+    name = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
+    matching_nodes = [node for node in sorted_central_nodes if node.name.lower() == name.lower()]
+    if not matching_nodes:
+        print(f"WARNING: No matching node found for name: {name}. Returning the first node.")
+        return sorted_central_nodes[0]
+    return matching_nodes[0]
 
 
 if __name__ == "__main__":
