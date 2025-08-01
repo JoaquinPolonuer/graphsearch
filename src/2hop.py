@@ -16,12 +16,12 @@ from llms.entity_extraction import (
 from utils import load_graph_and_qas, load_embeddings
 from algorithms import mapped_nodes_by_relevance
 
-graph_name = "prime"
-
-graph, qas = load_graph_and_qas(graph_name)
+graph, qas = load_graph_and_qas("amazon")
 doc_embeddings, query_embeddings = load_embeddings(graph.name)
 
-results_dir = DATA_DIR / f"connectedness/{graph.name}_logs_2hop_filter_answer_type_and_starting_node"
+results_dir = (
+    DATA_DIR / f"experiments/{graph.name}_logs_2hop_filter_answer_type_and_starting_node_name"
+)
 os.makedirs(results_dir, exist_ok=True)
 for question_index, row in qas.iloc[:1000].iterrows():
     question = row["question"]
@@ -34,7 +34,7 @@ for question_index, row in qas.iloc[:1000].iterrows():
         graph, question_embedding, doc_embeddings, entities
     )
 
-    starting_node = select_starting_node(question, sorted_central_nodes) # sorted_central_nodes[0]
+    starting_node = select_starting_node(question, sorted_central_nodes)  # sorted_central_nodes[0]
 
     candidates = list(graph.get_khop_idx(starting_node, k=2))
 
@@ -42,6 +42,8 @@ for question_index, row in qas.iloc[:1000].iterrows():
         answer_type = "paper"
     elif graph.name == "prime":
         answer_type = extract_question_answer_type(question, graph.node_types)
+    elif graph.name == "amazon":
+        answer_type = "product"
 
     candidates = graph.filter_indices_by_type(candidates, type=answer_type)
 

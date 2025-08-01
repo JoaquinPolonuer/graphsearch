@@ -24,7 +24,7 @@ def mapped_nodes_by_relevance(
             ).item(),
             reverse=True,
         )
-    elif graph.name == "mag":
+    elif graph.name in ["mag", "amazon"]:
         sorted_nodes = [
             node for _, node in sorted(zip(all_scores, all_nodes), key=lambda x: x[0], reverse=True)
         ]

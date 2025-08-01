@@ -5,10 +5,10 @@ import pandas as pd
 nodes_df = pd.read_parquet("data/graphs/parquet/amazon/nodes.parquet")
 
 node_types_brand_category_color = torch.load(
-    f"data/00_raw_stark_graphs/amazon/cache/brand-category-color/node_types.pt"
+    f"data/graphs/raw/amazon/cache/brand-category-color/node_types.pt"
 )
 with open(
-    f"data/00_raw_stark_graphs/amazon/cache/brand-category-color/node_type_dict.pkl", "rb"
+    f"data/graphs/raw/amazon/cache/brand-category-color/node_type_dict.pkl", "rb"
 ) as f:
     node_types_dict_brand_category_color = pickle.load(f)
     node_types_brand_category_color = [
