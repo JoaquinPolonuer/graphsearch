@@ -7,28 +7,18 @@ import torch
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from config import DATA_DIR
-from llms.entity_extraction import (
-    extract_entities_from_question,
-    extract_question_answer_type,
-    select_starting_node,
-)
-from utils import load_graph_and_qas, load_embeddings
+from llms.entity_extraction import extract_entities_from_question, extract_question_answer_type
+from utils import load_graph_and_qas, load_embeddings, iterate_qas, setup_results_dir
 from algorithms import get_central_nodes_and_starting_node
 
-graph_name = "amazon"
+graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
-results_dir = (
-    DATA_DIR / f"experiments/{graph.name}_one_node_per_entity_and_semantic_sort"
-)
-os.makedirs(results_dir, exist_ok=True)
-for question_index, row in qas.iloc[:1000].iterrows():
-    question = row["question"]
-    question_embedding = query_embeddings[question_index][0]
-    answer_indices = json.loads(row["answer_indices"])
+results_dir = setup_results_dir(graph.name, "2hop")
+for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
 
+    question_embedding = query_embeddings[question_index][0]
     entities = extract_entities_from_question(question)
 
     sorted_central_nodes, starting_node = get_central_nodes_and_starting_node(
