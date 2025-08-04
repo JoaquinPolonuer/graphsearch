@@ -6,9 +6,9 @@ sys.path.append(str(project_root))
 
 from index import ElasticsearchIndex
 
-from graph_types.prime import PrimeGraph
+from graph_types.graph import Graph
 
-graph = PrimeGraph.load()
+graph = Graph.load("prime")
 index = ElasticsearchIndex(name=f"{graph.name}_index")
 index.delete_if_exists()
 

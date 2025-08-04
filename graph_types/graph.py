@@ -3,10 +3,7 @@ from typing import Optional, Self
 import pandas as pd
 from fuzzywuzzy import fuzz
 from pydantic import BaseModel
-
-
-def fuzzy_match(name, pattern, threshold=90):
-    return fuzz.partial_ratio(name.lower(), pattern.lower()) >= threshold
+from pydantic import field_validator
 
 
 class Node(BaseModel):
@@ -54,6 +51,48 @@ class Edge(BaseModel):
 
     def __repr__(self):
         return f"Edge(start_node={self.start_node_index}, type={self.type}, end_node={self.end_node_index})"
+
+    def __str__(self):
+        return repr(self)
+
+
+class Path(BaseModel):
+    path_as_list: list[Node | str]
+
+    @field_validator("path_as_list", mode="before")
+    @classmethod
+    def validate_path_as_list(cls, path_as_list):
+        for i in range(0, len(path_as_list), 2):
+            assert isinstance(
+                path_as_list[i], Node
+            ), f"Expected Node at index {i}, got {type(path_as_list[i])}"
+        for i in range(1, len(path_as_list), 2):
+            assert isinstance(
+                path_as_list[i], str
+            ), f"Expected str at index {i}, got {type(path_as_list[i])}"
+        return path_as_list
+
+    def __hash__(self):
+        # A frozenset is an immutable, unordered collection of unique elements.
+        # Here, we use it to ensure that the hash is the same for a path and its reverse,
+        # since {path, reversed_path} as a frozenset will be equal for both.
+        fwd = tuple(self.path_as_list)
+        rev = tuple(reversed(self.path_as_list))
+        return hash(frozenset([fwd, rev]))
+
+    def __eq__(self, other):
+        if not isinstance(other, Path):
+            return False
+        fwd_self = tuple(self.path_as_list)
+        rev_self = tuple(reversed(self.path_as_list))
+        fwd_other = tuple(other.path_as_list)
+        rev_other = tuple(reversed(other.path_as_list))
+        return frozenset([fwd_self, rev_self]) == frozenset([fwd_other, rev_other])
+
+    def __repr__(self):
+        return " <-> ".join(
+            [str(node) if isinstance(node, Node) else node for node in self.path_as_list]
+        )
 
     def __str__(self):
         return repr(self)
@@ -211,3 +250,110 @@ class Graph(BaseModel):
         )
         filtered_indices = indices_df[indices_df["type"] == type]["index"].tolist()
         return filtered_indices
+
+    def simple_search_in_surroundings(
+        self, node: Node, query: Optional[str] = None, type: Optional[str] = None, k: int = 1
+    ) -> list[Node]:
+
+        subgraph = self.get_khop_subgraph(node, k)
+        search_nodes_df = subgraph.nodes_df
+
+        if type:
+            search_nodes_df = search_nodes_df[search_nodes_df["type"] == type]
+
+        if query:
+            search_nodes_df = search_nodes_df[
+                search_nodes_df["name"].str.contains(query, case=False, na=False)
+            ]
+
+        return [self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
+
+    def find_paths_of_length_2(self, src: Node, dst: Node):
+        if src.index == dst.index:
+            return []
+
+        direct_connections = self.edges_df[
+            (self.edges_df["start_node_index"] == src.index)
+            & (self.edges_df["end_node_index"] == dst.index)
+        ]
+
+        src_mediators = self.edges_df[(self.edges_df["start_node_index"] == src.index)]
+        mediator_dst = self.edges_df[(self.edges_df["end_node_index"] == dst.index)]
+
+        dst_mediators = self.edges_df[(self.edges_df["start_node_index"] == dst.index)]
+        mediator_src = self.edges_df[(self.edges_df["end_node_index"] == src.index)]
+
+        paths_with_mediator = (
+            pd.concat(
+                [
+                    pd.merge(
+                        src_mediators.rename(
+                            {
+                                "start_node_index": "node_1_index",
+                                "end_node_index": "node_2_index",
+                                "type": "type_1",
+                            },
+                            axis=1,
+                        ),
+                        mediator_dst.rename(
+                            {
+                                "end_node_index": "node_3_index",
+                                "start_node_index": "node_2_index",
+                                "type": "type_2",
+                            },
+                            axis=1,
+                        ),
+                        on="node_2_index",
+                        how="inner",
+                    ),
+                    pd.merge(
+                        dst_mediators.rename(
+                            {
+                                "start_node_index": "node_1_index",
+                                "end_node_index": "node_2_index",
+                                "type": "type_1",
+                            },
+                            axis=1,
+                        ),
+                        mediator_src.rename(
+                            {
+                                "end_node_index": "node_3_index",
+                                "start_node_index": "node_2_index",
+                                "type": "type_2",
+                            },
+                            axis=1,
+                        ),
+                        on="node_2_index",
+                        how="inner",
+                    ),
+                ]
+            )
+            .drop_duplicates()[["node_1_index", "type_1", "node_2_index", "type_2", "node_3_index"]]
+            .reset_index(drop=True)
+        )
+
+        paths = set()
+        
+        for _, row in direct_connections.iterrows():
+            path = Path(
+                path_as_list=[
+                    self.get_node_by_index(row["start_node_index"]),
+                    row["type"],
+                    self.get_node_by_index(row["end_node_index"]),
+                ]
+            )
+            paths.add(path)
+        
+        for _, row in paths_with_mediator.iterrows():
+            path = Path(
+                path_as_list=[
+                    self.get_node_by_index(row["node_1_index"]),
+                    row["type_1"],
+                    self.get_node_by_index(row["node_2_index"]),
+                    row["type_2"],
+                    self.get_node_by_index(row["node_3_index"]),
+                ]
+            )
+            paths.add(path)
+
+        return paths

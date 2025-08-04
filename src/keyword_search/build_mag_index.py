@@ -6,9 +6,9 @@ sys.path.append(str(project_root))
 
 from index import ElasticsearchIndex
 
-from graph_types.mag import MagGraph
+from graph_types.graph import Graph
 
-graph = MagGraph.load()
+graph = Graph.load("mag")
 index = ElasticsearchIndex(name=f"{graph.name}_index")
 index.delete_if_exists()
 index.create(
