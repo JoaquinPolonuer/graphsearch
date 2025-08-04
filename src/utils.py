@@ -3,19 +3,11 @@ import json
 import torch
 import pandas as pd
 from config import DATA_DIR
-from graph_types.prime import PrimeGraph
-from graph_types.mag import MagGraph
-from graph_types.amazon import AmazonGraph
-
+from graph_types.graph import Graph
 
 def load_graph_and_qas(graph_name: str):
     qas = pd.read_csv(DATA_DIR / f"qas/{graph_name}.csv")
-    if graph_name == "prime":
-        graph = PrimeGraph.load()
-    elif graph_name == "mag":
-        graph = MagGraph.load()
-    elif graph_name == "amazon":
-        graph = AmazonGraph.load()
+    graph = Graph.load(graph_name)
     return graph, qas
 
 

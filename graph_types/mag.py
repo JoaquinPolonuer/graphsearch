@@ -8,8 +8,6 @@ from typing import Self
 
 import pandas as pd
 
-from config import DATA_DIR
-
 from graph_types.graph import Graph, Node
 
 
@@ -73,39 +71,8 @@ class FieldOfStudyNode(Node):
         )
 
 
-class MagGraph(Graph):
-
-    @classmethod
-    def load(cls) -> Self:
-        return super().load(name="mag")
-
-    def node_from_df_row(self, row: pd.Series) -> Node:
-        if row["type"] == "author":
-            return AuthorNode.from_df_row(row)
-        elif row["type"] == "paper":
-            return PaperNode.from_df_row(row)
-        elif row["type"] == "institution":
-            return InstitutionNode.from_df_row(row)
-        elif row["type"] == "field_of_study":
-            return FieldOfStudyNode.from_df_row(row)
-
-        raise ValueError(f"Unknown node type: {row['type']}")
-
-    def node_from_doc(self, doc: dict) -> Node:
-        if doc["type"] == "paper":
-            return PaperNode.from_doc(doc)
-        elif doc["type"] == "author":
-            return AuthorNode.from_doc(doc)
-        elif doc["type"] == "institution":
-            return InstitutionNode.from_doc(doc)
-        elif doc["type"] == "field_of_study":
-            return FieldOfStudyNode.from_doc(doc)
-        else:
-            raise ValueError(f"Unknown node type: {doc['type']}")
-
-
 if __name__ == "__main__":
     # Example usage
-    mag_graph = MagGraph.load()
+    mag_graph = Graph.load("mag")
     node = mag_graph.get_node_by_index(0)
     second_hop = mag_graph.get_khop_idx(node, k=2)

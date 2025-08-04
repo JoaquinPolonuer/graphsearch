@@ -11,7 +11,7 @@ from llms.simple_calls import extract_entities_from_question, extract_question_a
 from utils import load_graph_and_qas, load_embeddings, iterate_qas, setup_results_dir
 from algorithms import get_central_nodes_and_starting_node
 
-graph_name = "prime"
+graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 

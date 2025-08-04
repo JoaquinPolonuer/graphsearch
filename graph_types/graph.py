@@ -3,7 +3,6 @@ from typing import Self, Optional
 import pandas as pd
 from fuzzywuzzy import fuzz
 from pydantic import BaseModel
-from config import DATA_DIR
 
 
 def fuzzy_match(name, pattern, threshold=90):
@@ -76,6 +75,8 @@ class Graph(BaseModel):
 
     @classmethod
     def load(cls, name) -> Self:
+        from config import DATA_DIR
+
         nodes_file = DATA_DIR / f"graphs/parquet/{name}/nodes.parquet"
         edges_file = DATA_DIR / f"graphs/parquet/{name}/edges.parquet"
 
@@ -84,11 +85,18 @@ class Graph(BaseModel):
 
         return cls(name=name, nodes_df=nodes_df, edges_df=edges_df)
 
-    def node_from_doc(self, data: dict) -> Node:
-        raise NotImplementedError("Subclasses must implement node_from_doc")
+    def get_node_class_by_type(self, node_type: str) -> type[Node]:
+        from config import NODE_TYPE_MAPPING
+
+        if node_type in NODE_TYPE_MAPPING:
+            return NODE_TYPE_MAPPING[node_type]
+        raise ValueError(f"Unknown node type: {node_type}")
 
     def node_from_df_row(self, row: pd.Series) -> Node:
-        raise NotImplementedError("Subclasses must implement node_from_df_row")
+        return self.get_node_class_by_type(row["type"]).from_df_row(row)
+
+    def node_from_doc(self, doc: dict) -> Node:
+        return self.get_node_class_by_type(doc["type"]).from_doc(doc)
 
     def get_node_by_index(self, index: int) -> Node:
         node_row = self.nodes_df[self.nodes_df["index"] == index]
