@@ -20,7 +20,8 @@ doc_embeddings = torch.load(
     / f"node_embeddings/{prime_graph.name}/text-embedding-ada-002/doc/candidate_emb_dict.pt"
 )
 query_embeddings = torch.load(
-    DATA_DIR / f"node_embeddings/{prime_graph.name}/text-embedding-ada-002/query/query_emb_dict.pt"
+    DATA_DIR
+    / f"node_embeddings/{prime_graph.name}/text-embedding-ada-002/query/query_emb_dict.pt"
 )
 
 results_dir = DATA_DIR / "connectedness/prime_logs_22"
@@ -54,7 +55,9 @@ for question_index, row in qas.iloc[0:5].iterrows():
         columns=["name", "index", "connectedness"],
     )
 
-    candidate_df["embedding"] = candidate_df["index"].apply(lambda index: doc_embeddings[index])
+    candidate_df["embedding"] = candidate_df["index"].apply(
+        lambda index: doc_embeddings[index]
+    )
     candidate_df["similarity"] = candidate_df["embedding"].apply(
         lambda embedding: torch.matmul(
             question_embedding.detach().clone(), embedding.detach().clone().T
@@ -67,8 +70,12 @@ for question_index, row in qas.iloc[0:5].iterrows():
 
     retrieved_indices = candidate_df["index"].tolist()
     hit_1 = retrieved_indices[0] in answer_indices if retrieved_indices else False
-    hit_5 = any([retrieved_index in answer_indices for retrieved_index in retrieved_indices[:5]])
-    recall_20 = len(set(retrieved_indices[:20]) & set(answer_indices)) / len(answer_indices)
+    hit_5 = any(
+        [retrieved_index in answer_indices for retrieved_index in retrieved_indices[:5]]
+    )
+    recall_20 = len(set(retrieved_indices[:20]) & set(answer_indices)) / len(
+        answer_indices
+    )
 
     log = {
         "question": question,
@@ -83,6 +90,8 @@ for question_index, row in qas.iloc[0:5].iterrows():
 
     with open(results_dir / f"{question_index}.json", "w") as f:
         json.dump(log, f, indent=4)
-        candidate_df.to_csv(results_dir / f"{question_index}_candidates.csv", index=False)
+        candidate_df.to_csv(
+            results_dir / f"{question_index}_candidates.csv", index=False
+        )
 
     print(f"Processed question {question_index}")

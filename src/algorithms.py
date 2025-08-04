@@ -1,20 +1,22 @@
-import torch
 from difflib import SequenceMatcher
+
+import torch
+
 from graph_types.graph import Graph, Node
 
 
 def normalized_edit_distance(name: str, question: str) -> float:
     name_lower = name.lower()
     question_lower = question.lower()
-    
+
     if name_lower in question_lower:
         return 0.0
-        
+
     matcher = SequenceMatcher(None, name_lower, question_lower)
     similarity = matcher.ratio()
-    
+
     edit_distance_ratio = 1 - similarity
-    
+
     return edit_distance_ratio
 
 
@@ -37,13 +39,17 @@ def get_central_nodes_and_starting_node(
         sorted_nodes = sorted(
             all_nodes,
             key=lambda x: torch.matmul(
-                question_embedding.detach().clone(), doc_embeddings[x.index].detach().clone().T
+                question_embedding.detach().clone(),
+                doc_embeddings[x.index].detach().clone().T,
             ).item(),
             reverse=True,
         )
     elif graph.name in ["mag", "amazon"]:
         sorted_nodes = [
-            node for _, node in sorted(zip(all_scores, all_nodes), key=lambda x: x[0], reverse=True)
+            node
+            for _, node in sorted(
+                zip(all_scores, all_nodes), key=lambda x: x[0], reverse=True
+            )
         ]
 
     # Sort nodes by normalized edit distance (lower is better, so no reverse)
@@ -54,7 +60,6 @@ def get_central_nodes_and_starting_node(
     #         -len(node.name)  # negative for descending order (longest name first)
     #     )
     # )
-
 
     starting_node = sorted_nodes[0]
 

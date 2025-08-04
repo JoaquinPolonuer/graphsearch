@@ -16,7 +16,11 @@ with open(f"data/00_raw_stark_graphs/mag/node_info.pkl", "rb") as f:
     node_info = pickle.load(f)
 
 edges_df = pd.DataFrame(
-    {"start_node_index": edge_index[0], "end_node_index": edge_index[1], "type": edge_types}
+    {
+        "start_node_index": edge_index[0],
+        "end_node_index": edge_index[1],
+        "type": edge_types,
+    }
 )
 nodes_df = pd.DataFrame(node_info.values())
 nodes_df["index"] = nodes_df.index

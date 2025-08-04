@@ -1,8 +1,10 @@
 from pathlib import Path
+
 from dotenv import load_dotenv
+
+from graph_types.amazon import BrandNode, CategoryNode, ColorNode, ProductNode
+from graph_types.mag import AuthorNode, FieldOfStudyNode, InstitutionNode, PaperNode
 from graph_types.prime import PrimeNode
-from graph_types.mag import PaperNode, AuthorNode, InstitutionNode, FieldOfStudyNode
-from graph_types.amazon import ProductNode, BrandNode, ColorNode, CategoryNode
 
 load_dotenv()
 

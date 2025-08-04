@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
-from utils import load_graph_and_qas, load_embeddings, iterate_qas, setup_results_dir
+from utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
 graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)

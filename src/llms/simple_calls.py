@@ -1,11 +1,11 @@
-import os
 import json
-import pandas as pd
+import os
 import pickle
 
+import pandas as pd
 from litellm import completion
-from graph_types.graph import Graph, Node
 
+from graph_types.graph import Graph, Node
 
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
     LLM_CALLS_CACHE = {}
@@ -30,7 +30,12 @@ def simple_completion(system_prompt: str, user_prompt: str) -> str:
         return LLM_CALLS_CACHE[cache_key]
 
     response = (
-        completion(model="azure/gpt-4o-1120", messages=messages, temperature=0.1, max_tokens=500)
+        completion(
+            model="azure/gpt-4o-1120",
+            messages=messages,
+            temperature=0.1,
+            max_tokens=500,
+        )
         .choices[0]
         .message.content.strip()
     )
@@ -79,7 +84,9 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     Return only the answer type as a string, no other text.
     """
     user_prompt = f"Extract the answer type from this question: {question}"
-    answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
+    answer_type = simple_completion(
+        system_prompt=system_prompt, user_prompt=user_prompt
+    )
     return answer_type
 
 
@@ -96,9 +103,13 @@ def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> lis
     **Very general nodes are usually not relevant to the question, so they should be discarded.**
     """
     user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReply only with with 'relevant_nodes: [(node_name, node_index), (node_name, node_index), ...]'"
-    relevant_nodes = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt).replace('"','')
+    relevant_nodes = simple_completion(
+        system_prompt=system_prompt, user_prompt=user_prompt
+    ).replace('"', "")
     node_names_and_indices = eval(relevant_nodes.split(": ")[-1])
-    nodes = [graph.get_node_by_index(int(index)) for name, index in node_names_and_indices]
+    nodes = [
+        graph.get_node_by_index(int(index)) for name, index in node_names_and_indices
+    ]
     return nodes
 
 
@@ -122,9 +133,13 @@ def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Nod
     """
 
     name = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
-    matching_nodes = [node for node in sorted_central_nodes if node.name.lower() == name.lower()]
+    matching_nodes = [
+        node for node in sorted_central_nodes if node.name.lower() == name.lower()
+    ]
     if not matching_nodes:
-        print(f"WARNING: No matching node found for name: {name}. Returning the first node.")
+        print(
+            f"WARNING: No matching node found for name: {name}. Returning the first node."
+        )
         return sorted_central_nodes[0]
     return matching_nodes[0]
 

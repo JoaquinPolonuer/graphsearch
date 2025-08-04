@@ -1,4 +1,4 @@
-from typing import Self, Optional
+from typing import Optional, Self
 
 import pandas as pd
 from fuzzywuzzy import fuzz
@@ -144,18 +144,20 @@ class Graph(BaseModel):
         if k == 2:
             second_hop_neighbors = pd.Series(dtype=int)
 
-            first_hop_neighbors = pd.Series(list(first_hop_neighbors), name="neighbor_index")
+            first_hop_neighbors = pd.Series(
+                list(first_hop_neighbors), name="neighbor_index"
+            )
             neighbors_df_1 = (
-                self.edges_df[self.edges_df["start_node_index"].isin(first_hop_neighbors)][
-                    "end_node_index"
-                ]
+                self.edges_df[
+                    self.edges_df["start_node_index"].isin(first_hop_neighbors)
+                ]["end_node_index"]
                 .rename("neighbor_index_1")
                 .drop_duplicates()
             )
             neighbors_df_2 = (
-                self.edges_df[self.edges_df["end_node_index"].isin(first_hop_neighbors)][
-                    "start_node_index"
-                ]
+                self.edges_df[
+                    self.edges_df["end_node_index"].isin(first_hop_neighbors)
+                ]["start_node_index"]
                 .rename("neighbor_index_2")
                 .drop_duplicates()
             )
@@ -181,9 +183,13 @@ class Graph(BaseModel):
     def search_nodes(self, query: str, k=10) -> tuple[list[Node], list[float]]:
         from src.keyword_search.index import ElasticsearchIndex
 
-        response = ElasticsearchIndex(name=f"{self.name}_index").search(query=query, k=k)
+        response = ElasticsearchIndex(name=f"{self.name}_index").search(
+            query=query, k=k
+        )
         hits = response.get("hits", {}).get("hits", [])
-        return [self.node_from_doc(hit["_source"]) for hit in hits], [hit["_score"] for hit in hits]
+        return [self.node_from_doc(hit["_source"]) for hit in hits], [
+            hit["_score"] for hit in hits
+        ]
 
     def filter_indices_by_type(self, indices: list[int], type: str) -> list[int]:
         indices_df = pd.DataFrame(indices, columns=["index"])
