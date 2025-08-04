@@ -43,7 +43,9 @@ class SubgraphExplorerAgent:
         return response.choices[0].message
 
     def search_in_surroundings(self, query: str, type: Optional[str], k: int) -> str:
-        candidates = self.graph.simple_search_in_surroundings(self.node, query=query, type=type, k=k)
+        candidates = self.graph.simple_search_in_surroundings(
+            self.node, query=query, type=type, k=k
+        )
 
         if not candidates:
             return f"search_in_surroundings({query}, {type}, {k}) didn't return any results. Consider widening your search or changing the strategy.\n"
@@ -136,18 +138,18 @@ class SubgraphExplorerAgent:
     def answer(self) -> list[Node]:
 
         state = f"""
-        Question: {self.question}
-        You are standing on node: {self.node}
+Question: {self.question}
+You are standing on node: {self.node}
 
-        Remember that your objective is to find the nodes that are the answer to the question. 
-        For this, you can
-        - search in the surroundings of this node with `search_in_surroundings` tool. You can also use this to see the neighbors of this node, setting k=1.
-        - find the path that connects this node to another node with the `find_paths` tool
-        - `submit_answer` when you think you found the nodes.
+Remember that your objective is to find the nodes that are the answer to the question. 
+For this, you can
+- search in the surroundings of this node with `search_in_surroundings` tool. You can also use this to see the neighbors of this node, setting k=1.
+- find the path that connects this node to another node with the `find_paths` tool
+- `submit_answer` when you think you found the nodes.
 
-        Consider searching for keywords and then finding paths to understand the connections between nodes.
-        """
-
+Consider searching for keywords and then finding paths to understand the connections between nodes.
+"""
+        print(state)
         self.message_history.append({"role": "user", "content": state})
 
         for i in range(10):
@@ -160,11 +162,9 @@ class SubgraphExplorerAgent:
                 tool_response = tool(arguments)
 
                 self.submit_tool_response(tool_response, selected_tool.id)
-                print(tool_response)
-
-            print("================================================")
+                print(tool_response, "\n", "================================================")
 
             if self.final_answer:
                 return self.final_answer
-            
+
         return []

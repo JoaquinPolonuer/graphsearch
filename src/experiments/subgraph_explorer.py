@@ -1,3 +1,5 @@
+import os
+import json
 import sys
 from pathlib import Path
 
@@ -12,8 +14,12 @@ graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
-results_dir = setup_results_dir(graph.name, "2hop")
-for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000))[1:]:
+results_dir = setup_results_dir(graph.name, "subgraph_explorer")
+for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000, shuffle=True))[:10]:
+
+    if os.path.exists(results_dir / f"{question_index}.json"):
+        print(f"Skipping {question_index} as it already exists.")
+        continue
 
     entities = extract_entities_from_question(question)
 
@@ -36,7 +42,16 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         )
         agent_answer = set(agent.answer())
         agent_answer_nodes = agent_answer_nodes.union(agent_answer)
-        
+
     agent_answer_indices = [node.index for node in agent_answer_nodes]
 
-    print(agent_answer_nodes)
+    log = {
+        "question": question,
+        "all_nodes": [node.index for node in all_nodes],
+        "starting_nodes_indices": [node.index for node in starting_nodes],
+        "agent_answer_indices": agent_answer_indices,
+        "answer_indices": answer_indices,
+    }
+
+    with open(results_dir / f"{question_index}.json", "w") as f:
+        json.dump(log, f, indent=4)

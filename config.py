@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 from dotenv import load_dotenv
 
 from graph_types.amazon import BrandNode, CategoryNode, ColorNode, ProductNode
@@ -10,6 +11,9 @@ load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_ROOT / "data"
+
+PYTORCH_SEED = 42
+torch.manual_seed(PYTORCH_SEED)
 
 NODE_TYPE_MAPPING = {
     "product": ProductNode,
