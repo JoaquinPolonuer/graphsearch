@@ -23,3 +23,6 @@ for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
         all_scores.extend(scores)
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
+
+    for starting_node in starting_nodes:
+        subgraph = graph.get_khop_subgraph(starting_node, k=2)

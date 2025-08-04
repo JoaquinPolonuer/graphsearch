@@ -136,8 +136,8 @@ class Graph(BaseModel):
                     "neighbor_index"
                 ].values
             )
-        else:
-            return set(neighbor_indices.values)
+
+        return set(neighbor_indices.values)
 
     def get_neighbors(self, node: Node) -> set[Node]:
         neighbor_indices = self.get_neighbors_idx(node.index)
@@ -180,6 +180,19 @@ class Graph(BaseModel):
 
             return set(second_hop_neighbors.values)
         raise ValueError(f"Unsupported value for k: {k}. Only 1 or 2 are supported.")
+
+    def get_khop_subgraph(self, node: Node, k: int) -> Self:
+        neighbors_idx = self.get_khop_idx(node, k)
+        nodes_df = self.nodes_df[self.nodes_df["index"].isin(neighbors_idx)]
+        edges_df = self.edges_df[
+            self.edges_df["start_node_index"].isin(neighbors_idx)
+            | self.edges_df["end_node_index"].isin(neighbors_idx)
+        ]
+        return self.__class__(
+            name=f"{k}=hop of {self.name} around {node.name}",
+            nodes_df=nodes_df,
+            edges_df=edges_df,
+        )
 
     def search_nodes(self, query: str, k=10) -> tuple[list[Node], list[float]]:
         from src.keyword_search.index import ElasticsearchIndex
