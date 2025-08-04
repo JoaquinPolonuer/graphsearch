@@ -1,7 +1,6 @@
 import torch
 from difflib import SequenceMatcher
 from graph_types.graph import Graph, Node
-from llms.entity_extraction import select_starting_node
 
 
 def normalized_edit_distance(name: str, question: str) -> float:

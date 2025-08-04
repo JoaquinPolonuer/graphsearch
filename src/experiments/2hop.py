@@ -7,7 +7,7 @@ import torch
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from llms.entity_extraction import extract_entities_from_question, extract_question_answer_type
+from llms.simple_calls import extract_entities_from_question, extract_question_answer_type
 from utils import load_graph_and_qas, load_embeddings, iterate_qas, setup_results_dir
 from algorithms import get_central_nodes_and_starting_node
 

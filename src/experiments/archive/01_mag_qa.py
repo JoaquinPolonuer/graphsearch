@@ -11,7 +11,7 @@ import pandas as pd
 
 from config import DATA_DIR
 from graph_types.mag import MagGraph
-from llms.entity_extraction import extract_entities_from_question
+from llms.simple_calls import extract_entities_from_question
 
 qas = pd.read_csv(DATA_DIR / "02_qa_datasets/mag.csv")
 mag_graph = MagGraph.load()

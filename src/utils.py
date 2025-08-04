@@ -30,11 +30,18 @@ def load_embeddings(graph_name: str):
     return doc_embeddings, query_embeddings
 
 
-def iterate_qas(qas, limit=None):
+def iterate_qas(qas, limit=None, shuffle=False):
     qas = qas.iloc[:limit] if limit else qas
     question_indices = qas.index.tolist()
     questions = qas["question"].tolist()
     answer_indices_list = qas["answer_indices"].apply(json.loads).tolist()
+    
+    if shuffle:
+        indices = torch.randperm(len(question_indices)).tolist()
+        question_indices = [question_indices[i] for i in indices]
+        questions = [questions[i] for i in indices]
+        answer_indices_list = [answer_indices_list[i] for i in indices]
+        
     return zip(question_indices, questions, answer_indices_list)
 
 

@@ -4,7 +4,7 @@ import pandas as pd
 import pickle
 
 from litellm import completion
-from graph_types.graph import Node
+from graph_types.graph import Graph, Node
 
 
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
@@ -81,6 +81,25 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     user_prompt = f"Extract the answer type from this question: {question}"
     answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
     return answer_type
+
+
+def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> list[Node]:
+    system_prompt = f"""
+    You will be given a question about a graph and a list of nodes from that graph.
+    The final task will be to find nodes in the graph that respond to the question. For this, we want to identify smaller subgraphs that might be very relevant to the question.
+    Your task is to group the nodes into two categories: those that are relevant to the question and those that are not.
+    If a node is marked as relevant, an agent will explore it in the next step. If a node is marked as not relevant, it will be discarded.
+    The output should be as follows:
+    relevant_nodes: [(node_name, node_index), (node_name, node_index), ...]
+    
+    A node is relevant if it is mentioned in the question or if it represents a concept that is directly related to the question.
+    **Very general nodes are usually not relevant to the question, so they should be discarded.**
+    """
+    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReply only with with 'relevant_nodes: [(node_name, node_index), (node_name, node_index), ...]'"
+    relevant_nodes = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt).replace('"','')
+    node_names_and_indices = eval(relevant_nodes.split(": ")[-1])
+    nodes = [graph.get_node_by_index(int(index)) for name, index in node_names_and_indices]
+    return nodes
 
 
 # NOTE: I think that asking for the index of the node is not the best way to do this.
