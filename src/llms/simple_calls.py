@@ -14,7 +14,7 @@ if not os.path.exists("data/cache/llm_calls_cache.pkl"):
         pickle.dump(LLM_CALLS_CACHE, f)
 
 
-def simple_completion(system_prompt: str, user_prompt: str) -> str:
+def simple_completion(system_prompt: str, user_prompt: str, use_cache=True) -> str:
     with open("data/cache/llm_calls_cache.pkl", "rb") as f:
         LLM_CALLS_CACHE = pickle.load(f)
 
@@ -25,7 +25,7 @@ def simple_completion(system_prompt: str, user_prompt: str) -> str:
 
     cache_key = f"{system_prompt.strip()}_{user_prompt.strip()}"
 
-    if LLM_CALLS_CACHE.get(cache_key):
+    if use_cache and LLM_CALLS_CACHE.get(cache_key):
         print("Using cached llm response")
         return LLM_CALLS_CACHE[cache_key]
 
@@ -84,12 +84,11 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     Return only the answer type as a string, no other text.
     """
     user_prompt = f"Extract the answer type from this question: {question}"
-    answer_type = simple_completion(
-        system_prompt=system_prompt, user_prompt=user_prompt
-    )
+    answer_type = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
     return answer_type
 
 
+# NOTE: We may benefit from enforcing json response
 def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> list[Node]:
     system_prompt = f"""
     You will be given a question about a graph and a list of nodes from that graph.
@@ -102,14 +101,12 @@ def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> lis
     A node is relevant if it is mentioned in the question or if it represents a concept that is directly related to the question.
     **Very general nodes are usually not relevant to the question, so they should be discarded.**
     """
-    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReply only with with 'relevant_nodes: [(node_name, node_index), (node_name, node_index), ...]'"
+    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReply only with with 'relevant_nodes: [(name, index), (name, index), ...]'"
     relevant_nodes = simple_completion(
-        system_prompt=system_prompt, user_prompt=user_prompt
+        system_prompt=system_prompt, user_prompt=user_prompt, use_cache=False
     ).replace('"', "")
     node_names_and_indices = eval(relevant_nodes.split(": ")[-1])
-    nodes = [
-        graph.get_node_by_index(int(index)) for name, index in node_names_and_indices
-    ]
+    nodes = [graph.get_node_by_index(int(index)) for name, index in node_names_and_indices]
     return nodes
 
 
@@ -133,13 +130,9 @@ def select_starting_node(question: str, sorted_central_nodes: list[Node]) -> Nod
     """
 
     name = simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
-    matching_nodes = [
-        node for node in sorted_central_nodes if node.name.lower() == name.lower()
-    ]
+    matching_nodes = [node for node in sorted_central_nodes if node.name.lower() == name.lower()]
     if not matching_nodes:
-        print(
-            f"WARNING: No matching node found for name: {name}. Returning the first node."
-        )
+        print(f"WARNING: No matching node found for name: {name}. Returning the first node.")
         return sorted_central_nodes[0]
     return matching_nodes[0]
 

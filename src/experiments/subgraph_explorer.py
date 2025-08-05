@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import torch
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
@@ -15,7 +16,9 @@ doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
-for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000, shuffle=True))[:10]:
+for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000, shuffle=True))[
+    :20
+]:
 
     if os.path.exists(results_dir / f"{question_index}.json"):
         print(f"Skipping {question_index} as it already exists.")
@@ -44,6 +47,14 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         agent_answer_nodes = agent_answer_nodes.union(agent_answer)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]
+
+    agent_answer_indices = sorted(
+        agent_answer_indices,
+        key=lambda x: torch.matmul(
+            query_embeddings[question_index].detach().clone(), doc_embeddings[x].detach().clone().T
+        ).item(),
+        reverse=True,
+    )
 
     log = {
         "question": question,
