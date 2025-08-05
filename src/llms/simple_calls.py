@@ -88,25 +88,27 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     return answer_type
 
 
-# NOTE: We may benefit from enforcing json response
 def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> list[Node]:
     system_prompt = f"""
     You will be given a question about a graph and a list of nodes from that graph.
     The final task will be to find nodes in the graph that respond to the question. For this, we want to identify smaller subgraphs that might be very relevant to the question.
     Your task is to group the nodes into two categories: those that are relevant to the question and those that are not.
     If a node is marked as relevant, an agent will explore it in the next step. If a node is marked as not relevant, it will be discarded.
-    The output should be as follows:
-    relevant_nodes: [(node_name, node_index), (node_name, node_index), ...]
     
     A node is relevant if it is mentioned in the question or if it represents a concept that is directly related to the question.
     **Very general nodes are usually not relevant to the question, so they should be discarded.**
+    
+    You must respond with valid JSON only. Return an array of tuples (name, index) for relevant nodes:
+    [{{"name": "node_name", "index": node_index}}, {{"name": "node_name", "index": node_index}}, ...]
     """
-    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReply only with with 'relevant_nodes: [(name, index), (name, index), ...]'"
-    relevant_nodes = simple_completion(
+    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReturn only valid JSON array of objects with 'name' and 'index' fields for relevant nodes."
+    
+    response = simple_completion(
         system_prompt=system_prompt, user_prompt=user_prompt, use_cache=False
-    ).replace('"', "")
-    node_names_and_indices = eval(relevant_nodes.split(": ")[-1])
-    nodes = [graph.get_node_by_index(int(index)) for name, index in node_names_and_indices]
+    )
+    
+    node_data = json.loads(response)
+    nodes = [graph.get_node_by_index(int(item["index"])) for item in node_data]
     return nodes
 
 
