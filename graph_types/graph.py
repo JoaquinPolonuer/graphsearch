@@ -6,6 +6,13 @@ from pydantic import BaseModel
 from pydantic import field_validator
 
 
+from fuzzywuzzy import fuzz
+
+
+def fuzzy_match(name, pattern, threshold=90):
+    return fuzz.partial_ratio(name.lower(), pattern.lower()) >= threshold
+
+
 class Node(BaseModel):
     name: str
     index: int
@@ -254,7 +261,6 @@ class Graph(BaseModel):
     def simple_search_in_surroundings(
         self, node: Node, query: Optional[str] = None, type: Optional[str] = None, k: int = 1
     ) -> list[Node]:
-
         subgraph = self.get_khop_subgraph(node, k)
         search_nodes_df = subgraph.nodes_df
 
@@ -263,9 +269,12 @@ class Graph(BaseModel):
 
         if query:
             search_nodes_df = search_nodes_df[
-                search_nodes_df["name"].str.contains(query, case=False, na=False)
+                search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query))
             ]
-
+            
+        if search_nodes_df.empty:
+            return []
+        
         return [self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
 
     def find_paths_of_length_2(self, src: Node, dst: Node):
