@@ -104,9 +104,12 @@ class FindPathsTool(Tool):
             graph=graph,
         )
 
-    def __call__(self, args: dict[str, Any]) -> dict[str, Any]:
+    def __call__(self, args: dict[str, Any]) -> dict[str, Any] | str:
         dst_node_index = args["dst_node_index"]
-        dst_node = self.graph.get_node_by_index(dst_node_index)
+        try:
+            dst_node = self.graph.get_node_by_index(dst_node_index)
+        except ValueError as e:
+            return f"find_paths failed: {str(e)}\n"
         return self.agent.find_paths(dst_node)
 
     def schema(self) -> dict[str, Any]:
