@@ -94,7 +94,10 @@ class Path(BaseModel):
 
     def __repr__(self):
         return " <-> ".join(
-            [str(node) if isinstance(node, Node) else node for node in self.path_as_list]
+            [
+                str(node) if isinstance(node, Node) else node
+                for node in self.path_as_list
+            ]
         )
 
     def __str__(self):
@@ -198,18 +201,20 @@ class Graph(BaseModel):
         if k == 2:
             second_hop_neighbors = pd.Series(dtype=int)
 
-            first_hop_neighbors = pd.Series(list(first_hop_neighbors), name="neighbor_index")
+            first_hop_neighbors = pd.Series(
+                list(first_hop_neighbors), name="neighbor_index"
+            )
             neighbors_df_1 = (
-                self.edges_df[self.edges_df["start_node_index"].isin(first_hop_neighbors)][
-                    "end_node_index"
-                ]
+                self.edges_df[
+                    self.edges_df["start_node_index"].isin(first_hop_neighbors)
+                ]["end_node_index"]
                 .rename("neighbor_index_1")
                 .drop_duplicates()
             )
             neighbors_df_2 = (
-                self.edges_df[self.edges_df["end_node_index"].isin(first_hop_neighbors)][
-                    "start_node_index"
-                ]
+                self.edges_df[
+                    self.edges_df["end_node_index"].isin(first_hop_neighbors)
+                ]["start_node_index"]
                 .rename("neighbor_index_2")
                 .drop_duplicates()
             )
@@ -239,9 +244,13 @@ class Graph(BaseModel):
     def search_nodes(self, query: str, k=10) -> tuple[list[Node], list[float]]:
         from src.keyword_search.index import ElasticsearchIndex
 
-        response = ElasticsearchIndex(name=f"{self.name}_index").search(query=query, k=k)
+        response = ElasticsearchIndex(name=f"{self.name}_index").search(
+            query=query, k=k
+        )
         hits = response.get("hits", {}).get("hits", [])
-        return [self.node_from_doc(hit["_source"]) for hit in hits], [hit["_score"] for hit in hits]
+        return [self.node_from_doc(hit["_source"]) for hit in hits], [
+            hit["_score"] for hit in hits
+        ]
 
     def filter_indices_by_type(self, indices: list[int], type: str) -> list[int]:
         indices_df = pd.DataFrame(indices, columns=["index"])
@@ -255,7 +264,11 @@ class Graph(BaseModel):
         return filtered_indices
 
     def simple_search_in_surroundings(
-        self, node: Node, query: Optional[str] = None, type: Optional[str] = None, k: int = 1
+        self,
+        node: Node,
+        query: Optional[str] = None,
+        type: Optional[str] = None,
+        k: int = 1,
     ) -> list[Node]:
         subgraph = self.get_khop_subgraph(node, k)
         search_nodes_df = subgraph.nodes_df
@@ -272,7 +285,9 @@ class Graph(BaseModel):
         if search_nodes_df.empty:
             return []
 
-        return [self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
+        return [
+            self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()
+        ]
 
     def find_paths_of_length_2(self, src: Node, dst: Node):
         if src.index == dst.index:
@@ -334,7 +349,9 @@ class Graph(BaseModel):
                     ),
                 ]
             )
-            .drop_duplicates()[["node_1_index", "type_1", "node_2_index", "type_2", "node_3_index"]]
+            .drop_duplicates()[
+                ["node_1_index", "type_1", "node_2_index", "type_2", "node_3_index"]
+            ]
             .reset_index(drop=True)
         )
 

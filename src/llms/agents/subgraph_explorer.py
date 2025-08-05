@@ -4,10 +4,15 @@ from typing import Any, Optional
 from litellm import completion
 
 from graph_types.graph import Graph, Node
-from src.llms.agents.tools import (FindPathsTool, SearchInSurroundingsTool,
-                                   SubmitAnswersTool)
-from src.prompts.prompts import (SUBGRAPH_EXPLORER_INITIAL_STATE,
-                                 SUBGRAPH_EXPLORER_SYSTEM)
+from src.llms.agents.tools import (
+    FindPathsTool,
+    SearchInSurroundingsTool,
+    SubmitAnswersTool,
+)
+from src.prompts.prompts import (
+    SUBGRAPH_EXPLORER_INITIAL_STATE,
+    SUBGRAPH_EXPLORER_SYSTEM,
+)
 
 
 class SubgraphExplorerAgent:
@@ -35,8 +40,10 @@ class SubgraphExplorerAgent:
 
         self.final_answer = None
 
-        self.system_prompt = SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
-        
+        self.system_prompt = SUBGRAPH_EXPLORER_SYSTEM.format(
+            node_types=self.graph.node_types
+        )
+
         self.conversation_as_string = ""
 
     def get_message(self, response: Any) -> Any:
@@ -45,7 +52,7 @@ class SubgraphExplorerAgent:
     def search_in_surroundings(self, query: str, type: Optional[str], k: int) -> str:
         if not k in [1, 2]:
             return f"search_in_surroundings({query}, {type}, {k}) only supports k=1 or k=2.\n"
-         
+
         candidates = self.graph.simple_search_in_surroundings(
             self.node, query=query, type=type, k=k
         )
@@ -95,7 +102,9 @@ class SubgraphExplorerAgent:
         return answer
 
     def select_tools(self) -> Any:
-        messages = [{"role": "system", "content": self.system_prompt}] + self.message_history
+        messages = [
+            {"role": "system", "content": self.system_prompt}
+        ] + self.message_history
 
         response = completion(
             model=self.model,
@@ -107,7 +116,10 @@ class SubgraphExplorerAgent:
         assistant_message = {"role": "assistant"}
 
         if self.get_message(response).content:
-            assistant_message = {"role": "assistant", "content": self.get_message(response).content}
+            assistant_message = {
+                "role": "assistant",
+                "content": self.get_message(response).content,
+            }
         if self.get_message(response).tool_calls:
             assistant_message = {
                 "role": "assistant",
@@ -158,7 +170,11 @@ class SubgraphExplorerAgent:
                 tool_response = tool(arguments)
 
                 self.submit_tool_response(tool_response, selected_tool.id)
-                print(tool_response, "\n", "================================================")
+                print(
+                    tool_response,
+                    "\n",
+                    "================================================",
+                )
                 self.conversation_as_string += str(tool_response) + "\n"
 
             if self.final_answer:

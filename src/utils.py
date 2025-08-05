@@ -34,7 +34,7 @@ def iterate_qas(qas, limit=None, shuffle=False, subset=None):
             raise ValueError("Cannot limit when subset is specified.")
 
         qas = qas[qas.index.isin(subset)]
-    
+
     qas = qas.iloc[:limit] if limit else qas
     question_indices = qas.index.tolist()
     questions = qas["question"].tolist()

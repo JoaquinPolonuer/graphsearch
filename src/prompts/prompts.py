@@ -1,5 +1,7 @@
 # GENERAL SIMPLE CALLS PROMPTS
-with open("src/prompts/simple_calls/general/starting_node_filtering_system.md", "r") as f:
+with open(
+    "src/prompts/simple_calls/general/starting_node_filtering_system.md", "r"
+) as f:
     STARTING_NODE_FILTERING_SYSTEM = f.read()
 
 with open("src/prompts/simple_calls/general/entity_extraction_system.md", "r") as f:

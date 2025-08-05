@@ -1,8 +1,13 @@
 import pandas as pd
 import pytest
 
-from graph_types.mag import (AuthorNode, FieldOfStudyNode, InstitutionNode,
-                             MagGraph, PaperNode)
+from graph_types.mag import (
+    AuthorNode,
+    FieldOfStudyNode,
+    InstitutionNode,
+    MagGraph,
+    PaperNode,
+)
 
 
 @pytest.fixture

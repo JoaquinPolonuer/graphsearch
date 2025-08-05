@@ -14,7 +14,9 @@ class Tool(ABC):
         self.graph = graph
 
     @abstractmethod
-    def __call__(self, args: dict[str, Any], current_node: Node, graph: Graph) -> dict[str, Any]:
+    def __call__(
+        self, args: dict[str, Any], current_node: Node, graph: Graph
+    ) -> dict[str, Any]:
         """__call__ the tool with given inputs and context"""
         pass
 
@@ -26,7 +28,9 @@ class Tool(ABC):
 
 class GoToNodeTool(Tool):
     def __init__(self, agent, graph):
-        super().__init__(name="go_to_node", description="Move to a node", agent=agent, graph=graph)
+        super().__init__(
+            name="go_to_node", description="Move to a node", agent=agent, graph=graph
+        )
 
     def __call__(self, args: dict[str, Any]) -> dict[str, Any]:
         node_name = args["node_name"]
@@ -148,7 +152,9 @@ class SubmitAnswersTool(Tool):
 
     def __call__(self, args: dict[str, Any]) -> dict[str, Any]:
         answer_node_indices = args["answer_node_indices"]
-        answer_nodes = [self.graph.get_node_by_index(name) for name in answer_node_indices]
+        answer_nodes = [
+            self.graph.get_node_by_index(name) for name in answer_node_indices
+        ]
         return self.agent.submit_answer(answer_nodes)
 
     def schema(self) -> dict[str, Any]:

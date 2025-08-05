@@ -4,8 +4,7 @@ import torch
 from dotenv import load_dotenv
 
 from graph_types.amazon import BrandNode, CategoryNode, ColorNode, ProductNode
-from graph_types.mag import (AuthorNode, FieldOfStudyNode, InstitutionNode,
-                             PaperNode)
+from graph_types.mag import AuthorNode, FieldOfStudyNode, InstitutionNode, PaperNode
 from graph_types.prime import PrimeNode
 
 load_dotenv()

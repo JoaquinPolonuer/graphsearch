@@ -8,20 +8,18 @@ import torch
 sys.path.append(str(Path(__file__).parent.parent))
 
 from graph_types.graph import Node
-from llms.simple_calls import (extract_entities_from_question,
-                               filter_relevant_nodes)
+from llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
-from utils import (iterate_qas, load_embeddings, load_graph_and_qas,
-                   setup_results_dir)
+from utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
 graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
-for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000, shuffle=True))[
-    :20
-]:
+for question_index, question, answer_indices in list(
+    iterate_qas(qas, limit=1000, shuffle=True)
+)[:20]:
 
     if os.path.exists(results_dir / f"{question_index}.json"):
         print(f"Skipping {question_index} as it already exists.")
@@ -37,7 +35,6 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         all_scores.extend(scores)
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
-
 
     conversations_as_string = []
     agent_answer_nodes: set[Node] = set()
@@ -55,12 +52,15 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
     agent_answer_indices = [node.index for node in agent_answer_nodes]
 
     if graph.name == "mag":
-        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
+        agent_answer_indices = graph.filter_indices_by_type(
+            agent_answer_indices, "paper"
+        )
 
     agent_answer_indices = sorted(
         agent_answer_indices,
         key=lambda x: torch.matmul(
-            query_embeddings[question_index].detach().clone(), doc_embeddings[x].detach().clone().T
+            query_embeddings[question_index].detach().clone(),
+            doc_embeddings[x].detach().clone().T,
         ).item(),
         reverse=True,
     )
