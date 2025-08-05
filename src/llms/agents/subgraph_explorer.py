@@ -12,6 +12,7 @@ from src.llms.agents.tools import (
 from src.prompts.prompts import (
     SUBGRAPH_EXPLORER_INITIAL_STATE,
     SUBGRAPH_EXPLORER_SYSTEM,
+    MAG_SUBGRAPH_EXPLORER_SYSTEM,
 )
 
 
@@ -40,9 +41,11 @@ class SubgraphExplorerAgent:
 
         self.final_answer = None
 
-        self.system_prompt = SUBGRAPH_EXPLORER_SYSTEM.format(
-            node_types=self.graph.node_types
+        system_prompt = (
+            MAG_SUBGRAPH_EXPLORER_SYSTEM if ("mag" in graph.name) else SUBGRAPH_EXPLORER_SYSTEM
         )
+
+        self.system_prompt = system_prompt.format(node_types=self.graph.node_types)
 
         self.conversation_as_string = ""
 
@@ -77,8 +80,12 @@ class SubgraphExplorerAgent:
         )
 
     def find_paths(self, node: Node) -> str:
-        paths = self.graph.find_paths_of_length_2(self.node, node)
+        try:
+            paths = self.graph.find_paths_of_length_2(self.node, node)
+        except Exception as e:
+            paths = []
 
+        # NOTE: THIS SHOULD NEVER HAPPEN. If a node is in the 2-hop neighborhood it means there's at least one path of length 2
         if not paths:
             return f"find_paths({self.node.name}, {node.name}) didn't return any results. Consider widening your search or changing the strategy.\n"
 
@@ -102,9 +109,7 @@ class SubgraphExplorerAgent:
         return answer
 
     def select_tools(self) -> Any:
-        messages = [
-            {"role": "system", "content": self.system_prompt}
-        ] + self.message_history
+        messages = [{"role": "system", "content": self.system_prompt}] + self.message_history
 
         response = completion(
             model=self.model,

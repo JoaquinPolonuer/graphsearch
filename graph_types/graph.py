@@ -94,10 +94,7 @@ class Path(BaseModel):
 
     def __repr__(self):
         return " <-> ".join(
-            [
-                str(node) if isinstance(node, Node) else node
-                for node in self.path_as_list
-            ]
+            [str(node) if isinstance(node, Node) else node for node in self.path_as_list]
         )
 
     def __str__(self):
@@ -201,20 +198,18 @@ class Graph(BaseModel):
         if k == 2:
             second_hop_neighbors = pd.Series(dtype=int)
 
-            first_hop_neighbors = pd.Series(
-                list(first_hop_neighbors), name="neighbor_index"
-            )
+            first_hop_neighbors = pd.Series(list(first_hop_neighbors), name="neighbor_index")
             neighbors_df_1 = (
-                self.edges_df[
-                    self.edges_df["start_node_index"].isin(first_hop_neighbors)
-                ]["end_node_index"]
+                self.edges_df[self.edges_df["start_node_index"].isin(first_hop_neighbors)][
+                    "end_node_index"
+                ]
                 .rename("neighbor_index_1")
                 .drop_duplicates()
             )
             neighbors_df_2 = (
-                self.edges_df[
-                    self.edges_df["end_node_index"].isin(first_hop_neighbors)
-                ]["start_node_index"]
+                self.edges_df[self.edges_df["end_node_index"].isin(first_hop_neighbors)][
+                    "start_node_index"
+                ]
                 .rename("neighbor_index_2")
                 .drop_duplicates()
             )
@@ -236,7 +231,7 @@ class Graph(BaseModel):
             | self.edges_df["end_node_index"].isin(neighbors_idx)
         ]
         return self.__class__(
-            name=f"{k}=hop of {self.name} around {node.name}",
+            name=f"{k}-hop of {self.name} around {node.name}",
             nodes_df=nodes_df,
             edges_df=edges_df,
         )
@@ -244,13 +239,9 @@ class Graph(BaseModel):
     def search_nodes(self, query: str, k=10) -> tuple[list[Node], list[float]]:
         from src.keyword_search.index import ElasticsearchIndex
 
-        response = ElasticsearchIndex(name=f"{self.name}_index").search(
-            query=query, k=k
-        )
+        response = ElasticsearchIndex(name=f"{self.name}_index").search(query=query, k=k)
         hits = response.get("hits", {}).get("hits", [])
-        return [self.node_from_doc(hit["_source"]) for hit in hits], [
-            hit["_score"] for hit in hits
-        ]
+        return [self.node_from_doc(hit["_source"]) for hit in hits], [hit["_score"] for hit in hits]
 
     def filter_indices_by_type(self, indices: list[int], type: str) -> list[int]:
         indices_df = pd.DataFrame(indices, columns=["index"])
@@ -285,73 +276,77 @@ class Graph(BaseModel):
         if search_nodes_df.empty:
             return []
 
-        return [
-            self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()
-        ]
+        return [self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
 
+    # NOTE: There's a bug with undirected graphs here!!!! We are not considering this
+    # A -> B <- C
     def find_paths_of_length_2(self, src: Node, dst: Node):
         if src.index == dst.index:
             return []
 
-        direct_connections = self.edges_df[
-            (self.edges_df["start_node_index"] == src.index)
-            & (self.edges_df["end_node_index"] == dst.index)
-        ]
+        direct_connections = pd.concat(
+            [
+                self.edges_df[
+                    (
+                        (self.edges_df["start_node_index"] == src.index)
+                        & (self.edges_df["end_node_index"] == dst.index)
+                    )
+                ].rename({"start_node_index": "src_index", "end_node_index": "dst_index"}, axis=1),
+                self.edges_df[
+                    (
+                        (self.edges_df["start_node_index"] == dst.index)
+                        & (self.edges_df["end_node_index"] == src.index)
+                    )
+                ].rename({"start_node_index": "dst_index", "end_node_index": "src_index"}, axis=1),
+            ]
+        )
 
-        src_mediators = self.edges_df[(self.edges_df["start_node_index"] == src.index)]
-        mediator_dst = self.edges_df[(self.edges_df["end_node_index"] == dst.index)]
+        src_mediators = self.edges_df[(self.edges_df["start_node_index"] == src.index)].rename(
+            {
+                "start_node_index": "src_index",
+                "end_node_index": "neighbor",
+            },
+            axis=1,
+        )
+        mediator_src = self.edges_df[(self.edges_df["end_node_index"] == src.index)].rename(
+            {
+                "start_node_index": "neighbor",
+                "end_node_index": "src_index",
+            },
+            axis=1,
+        )
+        src_edges = (
+            pd.concat([src_mediators, mediator_src]).drop_duplicates().reset_index(drop=True)
+        )
 
-        dst_mediators = self.edges_df[(self.edges_df["start_node_index"] == dst.index)]
-        mediator_src = self.edges_df[(self.edges_df["end_node_index"] == src.index)]
+        mediator_dst = self.edges_df[(self.edges_df["end_node_index"] == dst.index)].rename(
+            {
+                "start_node_index": "neighbor",
+                "end_node_index": "dst_index",
+            },
+            axis=1,
+        )
+        dst_mediators = self.edges_df[(self.edges_df["start_node_index"] == dst.index)].rename(
+            {
+                "start_node_index": "dst_index",
+                "end_node_index": "neighbor",
+            },
+            axis=1,
+        )
+
+        dst_edges = (
+            pd.concat([mediator_dst, dst_mediators]).drop_duplicates().reset_index(drop=True)
+        )
 
         paths_with_mediator = (
-            pd.concat(
-                [
-                    pd.merge(
-                        src_mediators.rename(
-                            {
-                                "start_node_index": "node_1_index",
-                                "end_node_index": "node_2_index",
-                                "type": "type_1",
-                            },
-                            axis=1,
-                        ),
-                        mediator_dst.rename(
-                            {
-                                "end_node_index": "node_3_index",
-                                "start_node_index": "node_2_index",
-                                "type": "type_2",
-                            },
-                            axis=1,
-                        ),
-                        on="node_2_index",
-                        how="inner",
-                    ),
-                    pd.merge(
-                        dst_mediators.rename(
-                            {
-                                "start_node_index": "node_1_index",
-                                "end_node_index": "node_2_index",
-                                "type": "type_1",
-                            },
-                            axis=1,
-                        ),
-                        mediator_src.rename(
-                            {
-                                "end_node_index": "node_3_index",
-                                "start_node_index": "node_2_index",
-                                "type": "type_2",
-                            },
-                            axis=1,
-                        ),
-                        on="node_2_index",
-                        how="inner",
-                    ),
-                ]
+            pd.merge(
+                src_edges,
+                dst_edges,
+                left_on="neighbor",
+                right_on="neighbor",
+                suffixes=("_1", "_2"),
             )
-            .drop_duplicates()[
-                ["node_1_index", "type_1", "node_2_index", "type_2", "node_3_index"]
-            ]
+            .drop_duplicates()
             .reset_index(drop=True)
         )
 
@@ -360,9 +355,9 @@ class Graph(BaseModel):
         for _, row in direct_connections.iterrows():
             path = Path(
                 path_as_list=[
-                    self.get_node_by_index(row["start_node_index"]),
+                    self.get_node_by_index(row["src_index"]),
                     row["type"],
-                    self.get_node_by_index(row["end_node_index"]),
+                    self.get_node_by_index(row["dst_index"]),
                 ]
             )
             paths.add(path)
@@ -370,11 +365,11 @@ class Graph(BaseModel):
         for _, row in paths_with_mediator.iterrows():
             path = Path(
                 path_as_list=[
-                    self.get_node_by_index(row["node_1_index"]),
+                    self.get_node_by_index(row["src_index"]),
                     row["type_1"],
-                    self.get_node_by_index(row["node_2_index"]),
+                    self.get_node_by_index(row["neighbor"]),
                     row["type_2"],
-                    self.get_node_by_index(row["node_3_index"]),
+                    self.get_node_by_index(row["dst_index"]),
                 ]
             )
             paths.add(path)
