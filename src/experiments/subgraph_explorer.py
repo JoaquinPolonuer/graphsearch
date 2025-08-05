@@ -35,6 +35,7 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
 
+    conversations_as_string = []
     agent_answer_nodes: set[Node] = set()
     for starting_node in starting_nodes:
         subgraph = graph.get_khop_subgraph(starting_node, k=2)
@@ -45,6 +46,7 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         )
         agent_answer = set(agent.answer())
         agent_answer_nodes = agent_answer_nodes.union(agent_answer)
+        conversations_as_string.append(agent.conversation_as_string)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]
 
@@ -59,6 +61,7 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
     log = {
         "question": question,
         "all_nodes": [node.index for node in all_nodes],
+        "conversations_as_string": "\n________\n".join(conversations_as_string),
         "starting_nodes_indices": [node.index for node in starting_nodes],
         "agent_answer_indices": agent_answer_indices,
         "answer_indices": answer_indices,
