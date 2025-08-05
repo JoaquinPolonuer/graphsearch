@@ -34,6 +34,7 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         all_scores.extend(scores)
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
+    starting_nodes = [n for n in starting_nodes if n.type != "field_of_study"]
 
     conversations_as_string = []
     agent_answer_nodes: set[Node] = set()
