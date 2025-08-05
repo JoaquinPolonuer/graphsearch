@@ -38,11 +38,16 @@ class SubgraphExplorerAgent:
         with open("src/llms/agents/prompts/agent_system_prompt.md", "r") as f:
             system_prompt_template = f.read()
         self.system_prompt = system_prompt_template.format(node_types=self.graph.node_types)
+        
+        self.conversation_as_string = ""
 
     def get_message(self, response: Any) -> Any:
         return response.choices[0].message
 
     def search_in_surroundings(self, query: str, type: Optional[str], k: int) -> str:
+        if not k in [1, 2]:
+            return f"search_in_surroundings({query}, {type}, {k}) only supports k=1 or k=2.\n"
+         
         candidates = self.graph.simple_search_in_surroundings(
             self.node, query=query, type=type, k=k
         )
@@ -150,6 +155,7 @@ For this, you can
 Consider searching for keywords and then finding paths to understand the connections between nodes.
 """
         print(state)
+        self.conversation_as_string += state + "\n"
         self.message_history.append({"role": "user", "content": state})
 
         for i in range(10):
@@ -163,6 +169,7 @@ Consider searching for keywords and then finding paths to understand the connect
 
                 self.submit_tool_response(tool_response, selected_tool.id)
                 print(tool_response, "\n", "================================================")
+                self.conversation_as_string += str(tool_response) + "\n"
 
             if self.final_answer:
                 return self.final_answer
