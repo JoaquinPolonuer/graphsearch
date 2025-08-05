@@ -26,7 +26,15 @@ def load_embeddings(graph_name: str):
     return doc_embeddings, query_embeddings
 
 
-def iterate_qas(qas, limit=None, shuffle=False):
+def iterate_qas(qas, limit=None, shuffle=False, subset=None):
+    if subset is not None:
+        if shuffle:
+            raise ValueError("Cannot shuffle when subset is specified.")
+        if limit is not None:
+            raise ValueError("Cannot limit when subset is specified.")
+
+        qas = qas[qas.index.isin(subset)]
+    
     qas = qas.iloc[:limit] if limit else qas
     question_indices = qas.index.tolist()
     questions = qas["question"].tolist()
