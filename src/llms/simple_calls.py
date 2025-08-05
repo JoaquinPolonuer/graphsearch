@@ -9,6 +9,7 @@ from src.prompts.prompts import (
     STARTING_NODE_FILTERING_SYSTEM,
     ENTITY_EXTRACTION_SYSTEM,
     QUESTION_ANSWER_TYPE_SYSTEM,
+    MAG_STARTING_NODE_FILTERING_SYSTEM,
 )
 
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
@@ -87,11 +88,16 @@ def extract_question_answer_type(question: str, node_types: list[str]) -> str:
 
 def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> list[Node]:
     user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}"
+    system_prompt = (
+        MAG_STARTING_NODE_FILTERING_SYSTEM
+        if graph.name == "mag"
+        else STARTING_NODE_FILTERING_SYSTEM
+    )
 
     response = completion(
         model="azure/gpt-4o-1120",
         messages=[
-            {"role": "system", "content": STARTING_NODE_FILTERING_SYSTEM},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         response_format={"type": "json_object"},
