@@ -1,15 +1,16 @@
+import torch
 import os
 import json
 import sys
-import torch
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 from llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
 from utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
-from llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from graph_types.graph import Node
+
+from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 
 graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
@@ -34,7 +35,7 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         all_scores.extend(scores)
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
-    starting_nodes = [n for n in starting_nodes if n.type != "field_of_study"]
+
 
     conversations_as_string = []
     agent_answer_nodes: set[Node] = set()
