@@ -95,7 +95,7 @@ def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> lis
     Your task is to group the nodes into two categories: those that are relevant to the question and those that are not.
     If a node is marked as relevant, an agent will explore it in the next step. If a node is marked as not relevant, it will be discarded.
     
-    A node is relevant if it is mentioned in the question or if it represents a concept that is directly related to the question.
+    A node is relevant if it is mentioned in the question or if it represents a concept that is **directly related to the question**.
     **Very general nodes are usually not relevant to the question, so they should be discarded.**
     
     Return a JSON object with this exact format:

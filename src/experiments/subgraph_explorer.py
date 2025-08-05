@@ -11,7 +11,7 @@ from utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_result
 from llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from graph_types.graph import Node
 
-graph_name = "prime"
+graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
@@ -49,6 +49,9 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
         conversations_as_string.append(agent.conversation_as_string)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]
+
+    if graph.name == "mag":
+        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
 
     agent_answer_indices = sorted(
         agent_answer_indices,

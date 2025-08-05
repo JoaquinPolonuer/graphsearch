@@ -269,12 +269,13 @@ class Graph(BaseModel):
 
         if query:
             search_nodes_df = search_nodes_df[
-                search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query))
+                (search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query)))
+                | (search_nodes_df["name"].str.contains(query, case=False))
             ]
-            
+
         if search_nodes_df.empty:
             return []
-        
+
         return [self.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
 
     def find_paths_of_length_2(self, src: Node, dst: Node):
@@ -342,7 +343,7 @@ class Graph(BaseModel):
         )
 
         paths = set()
-        
+
         for _, row in direct_connections.iterrows():
             path = Path(
                 path_as_list=[
@@ -352,7 +353,7 @@ class Graph(BaseModel):
                 ]
             )
             paths.add(path)
-        
+
         for _, row in paths_with_mediator.iterrows():
             path = Path(
                 path_as_list=[

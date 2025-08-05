@@ -13,16 +13,16 @@ import pandas as pd
 #     "data/graphs/parquet/prime/edges.parquet"
 # )
 
-# pd.read_csv("data/graphs/csv/mag/nodes.csv", low_memory=False).to_parquet(
-#     "data/graphs/parquet/mag/nodes.parquet"
-# )
-# pd.read_csv("data/graphs/csv/mag/edges.csv", low_memory=False).to_parquet(
-#     "data/graphs/parquet/mag/edges.parquet"
-# )
+pd.read_csv("data/graphs/csv/mag/nodes.csv", low_memory=False).to_parquet(
+    "data/graphs/parquet/mag/nodes.parquet"
+)
+pd.read_csv("data/graphs/csv/mag/edges.csv", low_memory=False).to_parquet(
+    "data/graphs/parquet/mag/edges.parquet"
+)
 
-pd.read_csv("data/graphs/csv/amazon/nodes.csv", low_memory=False).to_parquet(
-    "data/graphs/parquet/amazon/nodes.parquet"
-)
-pd.read_csv("data/graphs/csv/amazon/edges.csv", low_memory=False).to_parquet(
-    "data/graphs/parquet/amazon/edges.parquet"
-)
+# pd.read_csv("data/graphs/csv/amazon/nodes.csv", low_memory=False).to_parquet(
+#     "data/graphs/parquet/amazon/nodes.parquet"
+# )
+# pd.read_csv("data/graphs/csv/amazon/edges.csv", low_memory=False).to_parquet(
+#     "data/graphs/parquet/amazon/edges.parquet"
+# )
