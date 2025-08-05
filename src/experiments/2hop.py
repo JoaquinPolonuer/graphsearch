@@ -14,11 +14,11 @@ from src.llms.simple_calls import (
 )
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
-graph_name = "prime"
+graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
-results_dir = setup_results_dir(graph.name, "2hop")
+results_dir = setup_results_dir(graph.name, "2hop_new")
 for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
 
     question_embedding = query_embeddings[question_index][0]

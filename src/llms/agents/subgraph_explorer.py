@@ -7,7 +7,10 @@ from src.llms.agents.tools import (
     FindPathsTool,
     SubmitAnswersTool,
 )
-
+from src.prompts.prompts import (
+    SUBGRAPH_EXPLORER_SYSTEM,
+    SUBGRAPH_EXPLORER_INITIAL_STATE,
+)
 
 
 class SubgraphExplorerAgent:
@@ -35,9 +38,7 @@ class SubgraphExplorerAgent:
 
         self.final_answer = None
 
-        with open("src/llms/agents/prompts/agent_system_prompt.md", "r") as f:
-            system_prompt_template = f.read()
-        self.system_prompt = system_prompt_template.format(node_types=self.graph.node_types)
+        self.system_prompt = SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
         
         self.conversation_as_string = ""
 
@@ -141,19 +142,11 @@ class SubgraphExplorerAgent:
                 return tool
 
     def answer(self) -> list[Node]:
+        state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(
+            question=self.question,
+            node=self.node.name,
+        )
 
-        state = f"""
-Question: {self.question}
-You are standing on node: {self.node}
-
-Remember that your objective is to find the nodes that are the answer to the question. 
-For this, you can
-- search in the surroundings of this node with `search_in_surroundings` tool. You can also use this to see the neighbors of this node, setting k=1.
-- find the path that connects this node to another node with the `find_paths` tool
-- `submit_answer` when you think you found the nodes.
-
-Consider searching for keywords and then finding paths to understand the connections between nodes.
-"""
         print(state)
         self.conversation_as_string += state + "\n"
         self.message_history.append({"role": "user", "content": state})

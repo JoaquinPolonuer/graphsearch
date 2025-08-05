@@ -1,0 +1,14 @@
+with open("src/prompts/simple_calls/general/starting_node_filtering_system.md", "r") as f:
+    STARTING_NODE_FILTERING_SYSTEM = f.read()
+
+with open("src/prompts/simple_calls/general/entity_extraction_system.md", "r") as f:
+    ENTITY_EXTRACTION_SYSTEM = f.read()
+    
+with open("src/prompts/simple_calls/general/question_answer_type_system.md", "r") as f:
+    QUESTION_ANSWER_TYPE_SYSTEM = f.read()
+
+with open("src/prompts/subgraph_explorer/system_prompt.md", "r") as f:
+    SUBGRAPH_EXPLORER_SYSTEM = f.read()
+
+with open("src/prompts/subgraph_explorer/initial_state.md", "r") as f:
+    SUBGRAPH_EXPLORER_INITIAL_STATE = f.read()
