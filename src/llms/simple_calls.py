@@ -98,18 +98,33 @@ def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> lis
     A node is relevant if it is mentioned in the question or if it represents a concept that is directly related to the question.
     **Very general nodes are usually not relevant to the question, so they should be discarded.**
     
-    You must respond with valid JSON only. Return an array of tuples (name, index) for relevant nodes:
-    [{{"name": "node_name", "index": node_index}}, {{"name": "node_name", "index": node_index}}, ...]
+    Return a JSON object with this exact format:
+    {{
+        "relevant_nodes": [
+            {{"name": "node_name", "index": node_index}},
+            {{"name": "node_name", "index": node_index}}
+        ]
+    }}
     """
-    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}\nReturn only valid JSON array of objects with 'name' and 'index' fields for relevant nodes."
+    user_prompt = f"Question: {question}\nNodes:{[str(n) for n in nodes]}"
     
-    response = simple_completion(
-        system_prompt=system_prompt, user_prompt=user_prompt, use_cache=False
+    response = completion(
+        model="azure/gpt-4o-1120",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.1,
+        max_tokens=500,
     )
     
-    node_data = json.loads(response)
-    nodes = [graph.get_node_by_index(int(item["index"])) for item in node_data]
-    return nodes
+    response_content = response.choices[0].message.content
+    parsed_response = json.loads(response_content)
+    node_data = parsed_response["relevant_nodes"]
+    
+    result_nodes = [graph.get_node_by_index(int(item["index"])) for item in node_data]
+    return result_nodes
 
 
 # NOTE: I think that asking for the index of the node is not the best way to do this.
