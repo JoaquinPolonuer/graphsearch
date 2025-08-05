@@ -1,16 +1,18 @@
-import torch
-import os
 import json
+import os
 import sys
 from pathlib import Path
 
+import torch
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
-from utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from graph_types.graph import Node
-
+from llms.simple_calls import (extract_entities_from_question,
+                               filter_relevant_nodes)
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
+from utils import (iterate_qas, load_embeddings, load_graph_and_qas,
+                   setup_results_dir)
 
 graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)

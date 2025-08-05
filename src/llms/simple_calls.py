@@ -5,12 +5,10 @@ import pickle
 from litellm import completion
 
 from graph_types.graph import Graph, Node
-from src.prompts.prompts import (
-    STARTING_NODE_FILTERING_SYSTEM,
-    ENTITY_EXTRACTION_SYSTEM,
-    QUESTION_ANSWER_TYPE_SYSTEM,
-    MAG_STARTING_NODE_FILTERING_SYSTEM,
-)
+from src.prompts.prompts import (ENTITY_EXTRACTION_SYSTEM,
+                                 MAG_STARTING_NODE_FILTERING_SYSTEM,
+                                 QUESTION_ANSWER_TYPE_SYSTEM,
+                                 STARTING_NODE_FILTERING_SYSTEM)
 
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
     LLM_CALLS_CACHE = {}

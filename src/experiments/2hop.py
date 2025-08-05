@@ -8,11 +8,10 @@ import torch
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.algorithms import get_central_nodes_and_starting_node
-from src.llms.simple_calls import (
-    extract_entities_from_question,
-    extract_question_answer_type,
-)
-from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
+from src.llms.simple_calls import (extract_entities_from_question,
+                                   extract_question_answer_type)
+from src.utils import (iterate_qas, load_embeddings, load_graph_and_qas,
+                       setup_results_dir)
 
 graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)

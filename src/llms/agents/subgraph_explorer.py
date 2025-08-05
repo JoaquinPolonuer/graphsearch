@@ -1,16 +1,13 @@
 import json
 from typing import Any, Optional
+
 from litellm import completion
-from graph_types.graph import Node, Graph
-from src.llms.agents.tools import (
-    SearchInSurroundingsTool,
-    FindPathsTool,
-    SubmitAnswersTool,
-)
-from src.prompts.prompts import (
-    SUBGRAPH_EXPLORER_SYSTEM,
-    SUBGRAPH_EXPLORER_INITIAL_STATE,
-)
+
+from graph_types.graph import Graph, Node
+from src.llms.agents.tools import (FindPathsTool, SearchInSurroundingsTool,
+                                   SubmitAnswersTool)
+from src.prompts.prompts import (SUBGRAPH_EXPLORER_INITIAL_STATE,
+                                 SUBGRAPH_EXPLORER_SYSTEM)
 
 
 class SubgraphExplorerAgent:

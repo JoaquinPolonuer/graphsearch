@@ -2,11 +2,7 @@ from typing import Optional, Self
 
 import pandas as pd
 from fuzzywuzzy import fuzz
-from pydantic import BaseModel
-from pydantic import field_validator
-
-
-from fuzzywuzzy import fuzz
+from pydantic import BaseModel, field_validator
 
 
 def fuzzy_match(name, pattern, threshold=90):
