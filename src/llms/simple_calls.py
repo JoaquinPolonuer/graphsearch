@@ -72,9 +72,7 @@ def parse_response(response: str) -> list[str]:
 def extract_entities_from_question(question: str) -> list[str]:
     user_prompt = f"Extract entities from this question: {question}"
 
-    response = simple_completion(
-        system_prompt=ENTITY_EXTRACTION_SYSTEM, user_prompt=user_prompt
-    )
+    response = simple_completion(system_prompt=ENTITY_EXTRACTION_SYSTEM, user_prompt=user_prompt)
     entities = parse_response(response)
     return entities
 
@@ -82,9 +80,7 @@ def extract_entities_from_question(question: str) -> list[str]:
 def extract_question_answer_type(question: str, node_types: list[str]) -> str:
     user_prompt = f"Extract the answer type from this question: {question}"
     answer_type = simple_completion(
-        system_prompt=QUESTION_ANSWER_TYPE_SYSTEM.format(
-            node_types=", ".join(node_types)
-        ),
+        system_prompt=QUESTION_ANSWER_TYPE_SYSTEM.format(node_types=", ".join(node_types)),
         user_prompt=user_prompt,
     )
     return answer_type
@@ -115,6 +111,21 @@ def filter_relevant_nodes(question: str, nodes: list[Node], graph: Graph) -> lis
 
     result_nodes = [graph.get_node_by_index(int(item["index"])) for item in node_data]
     return result_nodes
+
+
+def answer_based_on_nodes(question: str, nodes: list[Node]) -> str:
+    system_prompt = """
+    You are an expert in biomedical knowledge. You will be given a question and a set of nodes extracted from a KG that contain relevant information. 
+    Your task is to provide a concise answer based only on the information in the nodes.
+    """
+
+    evidence = ""
+    for node in nodes:
+        evidence += f"Node Name: {node.name}\nDetails: {node.details}\n\n"
+
+    user_prompt = f"Question: {question}\n\nEvidence:\n\n{evidence}"
+
+    return simple_completion(system_prompt=system_prompt, user_prompt=user_prompt)
 
 
 if __name__ == "__main__":
