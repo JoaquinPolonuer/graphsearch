@@ -12,14 +12,14 @@ from src.llms.simple_calls import extract_entities_from_question, filter_relevan
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
-graph_name = "mag"
+graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
 for question_index, question, answer_indices in list(
     iterate_qas(qas, limit=1000, shuffle=True)
-)[:20]:
+)[:100]:
 
     if os.path.exists(results_dir / f"{question_index}.json"):
         print(f"Skipping {question_index} as it already exists.")

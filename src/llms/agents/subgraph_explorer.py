@@ -13,6 +13,7 @@ from src.prompts.prompts import (
     SUBGRAPH_EXPLORER_INITIAL_STATE,
     SUBGRAPH_EXPLORER_SYSTEM,
     MAG_SUBGRAPH_EXPLORER_SYSTEM,
+    PRIME_SUBGRAPH_EXPLORER_SYSTEM,
 )
 
 
@@ -41,9 +42,12 @@ class SubgraphExplorerAgent:
 
         self.final_answer = None
 
-        system_prompt = (
-            MAG_SUBGRAPH_EXPLORER_SYSTEM if ("mag" in graph.name) else SUBGRAPH_EXPLORER_SYSTEM
-        )
+        if "prime" in graph.name:
+            system_prompt = PRIME_SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
+        elif "mag" in graph.name:
+            system_prompt = MAG_SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
+        else:
+            system_prompt = SUBGRAPH_EXPLORER_SYSTEM
 
         self.system_prompt = system_prompt.format(node_types=self.graph.node_types)
 

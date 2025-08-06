@@ -22,3 +22,7 @@ with open("src/prompts/subgraph_explorer/general/initial_state.md", "r") as f:
 # MAG SUBGRAPH EXPLORER PROMPTS
 with open("src/prompts/subgraph_explorer/mag/system_prompt.md", "r") as f:
     MAG_SUBGRAPH_EXPLORER_SYSTEM = f.read()
+    
+# PRIME SUBGRAPH EXPLORER PROMPTS
+with open("src/prompts/subgraph_explorer/prime/system_prompt.md", "r") as f:
+    PRIME_SUBGRAPH_EXPLORER_SYSTEM = f.read()
