@@ -114,13 +114,13 @@ class ElasticsearchIndex(BaseModel):
             "query": {
                 "bool": {
                     "should": [
-                        {"match": {"name": {"query": query, "boost": 2}}},
-                        {"wildcard": {f"{'name'}.keyword": f"*{query}*"}},
-                        {"fuzzy": {"name": {"value": query, "fuzziness": "AUTO"}}},
-                    ]
+                        {"match": {"name": {"query": query, "boost": 3}}},
+                        {"match_phrase": {"name": {"query": query, "boost": 2}}},
+                        {"match": {"name": {"query": query, "fuzziness": "AUTO", "boost": 1}}},
+                    ],
+                    "minimum_should_match": 1,
                 }
             },
-            "sort": [{"_score": {"order": "desc"}}],
         }
 
         response = requests.post(
