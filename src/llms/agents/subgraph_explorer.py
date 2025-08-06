@@ -15,6 +15,12 @@ from src.prompts.prompts import (
     MAG_SUBGRAPH_EXPLORER_SYSTEM,
     PRIME_SUBGRAPH_EXPLORER_SYSTEM,
 )
+from fuzzywuzzy import fuzz
+from pydantic import BaseModel, field_validator
+
+
+def fuzzy_match(name, pattern, threshold=90):
+    return fuzz.partial_ratio(name.lower(), pattern.lower()) >= threshold
 
 
 class SubgraphExplorerAgent:
@@ -60,8 +66,48 @@ class SubgraphExplorerAgent:
         if not k in [1, 2]:
             return f"search_in_surroundings({query}, {type}, {k}) only supports k=1 or k=2.\n"
 
-        candidates = self.graph.simple_search_in_surroundings(
-            self.node, query=query, type=type, k=k
+        subgraph = self.graph.get_khop_subgraph(self.node, k)
+        search_nodes_df = subgraph.nodes_df
+
+        if type:
+            search_nodes_df = search_nodes_df[search_nodes_df["type"] == type]
+
+        if query:
+            search_nodes_df_details = search_nodes_df[
+                (search_nodes_df["details"].str.contains(query, case=False))
+            ]
+            candidates_details = (
+                [
+                    self.graph.get_node_by_index(idx)
+                    for idx in search_nodes_df_details["index"].tolist()
+                ]
+                if search_nodes_df_details is not None
+                else []
+            )
+
+            sentences = []
+            for candidate in candidates_details:
+                match_in_candidate = ""
+                for sentence in str(candidate.details).split("."):
+                    if query in sentence:
+                        match_in_candidate += f"(...) {sentence}"
+                sentences.append(match_in_candidate)
+
+            more_candidates = [
+                f"{str(candidate)}: {sentence}"
+                for candidate, sentence in zip(candidates_details, sentences)
+                if sentence != ""
+            ]
+
+            search_nodes_df = search_nodes_df[
+                (search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query)))
+                | (search_nodes_df["name"].str.contains(query, case=False))
+            ]
+
+        candidates = (
+            [self.graph.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
+            if search_nodes_df is not None
+            else []
         )
 
         if not candidates:
