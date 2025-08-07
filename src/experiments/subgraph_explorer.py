@@ -72,6 +72,8 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
 
     if graph.name == "mag":
         agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
+    if graph.name == "amazon":
+        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "product")
 
     agent_answer_indices = sorted(
         agent_answer_indices,
