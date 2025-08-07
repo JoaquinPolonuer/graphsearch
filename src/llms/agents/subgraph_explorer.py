@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any, Optional, Generator
 
 from litellm import completion
 
@@ -123,7 +123,7 @@ class SubgraphExplorerAgent:
         else:
             raise ValueError(f"Unknown tool: {function_name}")
 
-    def answer(self) -> list[Node]:
+    def answer(self) -> Generator[tuple[str, Optional[list[Node]]], None, None]:
         state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(
             question=self.question,
             node=self.node.name,
@@ -144,7 +144,4 @@ class SubgraphExplorerAgent:
                     "================================================",
                 )
 
-            if self.final_answer:
-                return self.final_answer
-
-        return []
+                yield selected_tool, self.final_answer

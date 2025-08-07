@@ -12,7 +12,7 @@ from src.llms.simple_calls import extract_entities_from_question, filter_relevan
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
-graph_name = "mag"
+graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
@@ -50,8 +50,10 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
             graph=subgraph,
             question=question,
         )
-        agent_answer = set(agent.answer())
-        agent_answer_nodes = agent_answer_nodes.union(agent_answer)
+        for selected_tool, final_answer in agent.answer():
+            if final_answer is not None:
+                agent_answer_nodes = agent_answer_nodes.union(set(final_answer))
+                break
         message_histories.append(agent.message_history)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]
