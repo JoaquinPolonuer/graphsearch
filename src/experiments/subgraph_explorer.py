@@ -12,7 +12,7 @@ from src.llms.simple_calls import extract_entities_from_question, filter_relevan
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 
-graph_name = "prime"
+graph_name = "amazon"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 

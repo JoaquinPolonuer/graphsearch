@@ -25,7 +25,7 @@ class BrandNode(Node):
     @classmethod
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
-            name=str(row["title"]),
+            name=str(row["brand_name"]),
             index=row["index"],
             type=row["type"],
         )
@@ -35,7 +35,7 @@ class ColorNode(Node):
     @classmethod
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
-            name=str(row["title"]),
+            name=str(row["color_name"]),
             index=row["index"],
             type=row["type"],
         )
@@ -45,7 +45,7 @@ class CategoryNode(Node):
     @classmethod
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
-            name=str(row["title"]),
+            name=str(row["category_name"]),
             index=row["index"],
             type=row["type"],
         )

@@ -5,6 +5,8 @@ from fuzzywuzzy import fuzz
 
 
 def fuzzy_match(name, pattern, threshold=90):
+    if not name:
+        return False
     return fuzz.partial_ratio(name.lower(), pattern.lower()) >= threshold
 
 

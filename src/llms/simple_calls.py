@@ -42,8 +42,15 @@ def simple_completion(system_prompt: str, user_prompt: str, use_cache=True) -> s
             max_tokens=500,
         )
         .choices[0]
-        .message.content.strip()
+        .message.content
     )
+        
+    try:
+        response = response.strip()
+    except Exception as e:
+        print(f"Error processing response: {e}")
+        response = "[]"
+        pass
 
     LLM_CALLS_CACHE[cache_key] = response
     with open("data/cache/llm_calls_cache.pkl", "wb") as f:
