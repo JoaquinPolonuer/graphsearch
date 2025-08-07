@@ -17,13 +17,18 @@ doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
-for question_index, question, answer_indices in list(
-    iterate_qas(qas, limit=1000, shuffle=True)
-)[:100]:
+for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000, shuffle=True))[
+    :100
+]:
 
     if os.path.exists(results_dir / f"{question_index}.json"):
-        print(f"Skipping {question_index} as it already exists.")
-        continue
+        with open(results_dir / f"{question_index}.json", "r") as f:
+            log = json.load(f)
+        if set(log.get("agent_answer_indices")).issuperset(set(log.get("answer_indices"))):
+            print(f"Skipping {question_index} as it was correctly solved.")
+            continue
+        else:
+            print(f"Re-solving {question_index} as it was not correctly solved.")
 
     entities = extract_entities_from_question(question)
 
@@ -36,7 +41,7 @@ for question_index, question, answer_indices in list(
 
     starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
 
-    conversations_as_string = []
+    message_histories = []
     agent_answer_nodes: set[Node] = set()
     for starting_node in starting_nodes:
         subgraph = graph.get_khop_subgraph(starting_node, k=2)
@@ -47,14 +52,12 @@ for question_index, question, answer_indices in list(
         )
         agent_answer = set(agent.answer())
         agent_answer_nodes = agent_answer_nodes.union(agent_answer)
-        conversations_as_string.append(agent.conversation_as_string)
+        message_histories.append(agent.message_history)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]
 
     if graph.name == "mag":
-        agent_answer_indices = graph.filter_indices_by_type(
-            agent_answer_indices, "paper"
-        )
+        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
 
     agent_answer_indices = sorted(
         agent_answer_indices,
@@ -68,7 +71,7 @@ for question_index, question, answer_indices in list(
     log = {
         "question": question,
         "all_nodes": [node.index for node in all_nodes],
-        "conversations_as_string": "\n________\n".join(conversations_as_string),
+        "message_histories": message_histories,
         "starting_nodes_indices": [node.index for node in starting_nodes],
         "agent_answer_indices": agent_answer_indices,
         "answer_indices": answer_indices,

@@ -23,7 +23,7 @@ graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
-results_dir = setup_results_dir(graph.name, "2hop_new")
+results_dir = setup_results_dir(graph.name, "2hop")
 for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
 
     question_embedding = query_embeddings[question_index][0]

@@ -56,8 +56,6 @@ class SubgraphExplorerAgent:
 
         self.system_prompt = system_prompt.format(node_types=self.graph.node_types)
 
-        self.conversation_as_string = ""
-
     def get_message(self, response: Any) -> Any:
         return response.choices[0].message
 
@@ -132,7 +130,6 @@ class SubgraphExplorerAgent:
         )
 
         print(state)
-        self.conversation_as_string += state + "\n"
         self.message_history.append({"role": "user", "content": state})
 
         for i in range(10):
@@ -146,7 +143,6 @@ class SubgraphExplorerAgent:
                     "\n",
                     "================================================",
                 )
-                self.conversation_as_string += str(tool_response) + "\n"
 
             if self.final_answer:
                 return self.final_answer
