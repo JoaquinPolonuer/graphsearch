@@ -27,7 +27,7 @@ for entity in entities:
 
 starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
 
-conversations_as_string = []
+message_histories = []
 agent_answer_nodes: set[Node] = set()
 for starting_node in starting_nodes:
     subgraph = graph.get_khop_subgraph(starting_node, k=2)
@@ -36,9 +36,11 @@ for starting_node in starting_nodes:
         graph=subgraph,
         question=question,
     )
-    agent_answer = set(agent.answer())
-    agent_answer_nodes = agent_answer_nodes.union(agent_answer)
-    conversations_as_string.append(agent.conversation_as_string)
+    for selected_tool, final_answer in agent.answer():
+        if final_answer is not None:
+            agent_answer_nodes = agent_answer_nodes.union(set(final_answer))
+            break
+    message_histories.append(agent.message_history)
 
 answer = answer_based_on_nodes(
     question=question,

@@ -123,7 +123,7 @@ class SubgraphExplorerAgent:
         else:
             raise ValueError(f"Unknown tool: {function_name}")
 
-    def answer(self) -> Generator[tuple[str, Optional[list[Node]]], None, None]:
+    def answer(self, max_steps=10) -> Generator[tuple[str, Optional[list[Node]]], None, None]:
         state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(
             question=self.question,
             node=self.node.name,
@@ -132,7 +132,7 @@ class SubgraphExplorerAgent:
         print(state)
         self.message_history.append({"role": "user", "content": state})
 
-        for i in range(10):
+        for i in range(max_steps):
             selected_tools = self.select_tools()
 
             for selected_tool in selected_tools:
