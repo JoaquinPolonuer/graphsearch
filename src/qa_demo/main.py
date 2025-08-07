@@ -1,9 +1,5 @@
-import json
-import os
 import sys
 from pathlib import Path
-
-import torch
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -18,7 +14,7 @@ from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 
 graph = Graph.load("prime")
 
-question = "What are the reasons for the underuse of intranasal corticosteroids (INCSs) in the treatment of rhinitis?"
+question = "What are common treatments for Tuberculosis in africa?"
 
 entities = extract_entities_from_question(question)
 

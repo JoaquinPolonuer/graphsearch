@@ -4,11 +4,10 @@ from typing import Any, Optional
 from litellm import completion
 
 from graph_types.graph import Graph, Node
-from src.llms.agents.tools import (
-    FindPathsTool,
-    SearchInSurroundingsTool,
-    SubmitAnswersTool,
-)
+from src.llms.agents.tools.find_paths import FindPathsTool
+from src.llms.agents.tools.search_in_surroundings import SearchInSurroundingsTool
+from src.llms.agents.tools.submit_answers import SubmitAnswersTool
+
 from src.prompts.prompts import (
     SUBGRAPH_EXPLORER_INITIAL_STATE,
     SUBGRAPH_EXPLORER_SYSTEM,
@@ -62,112 +61,19 @@ class SubgraphExplorerAgent:
     def get_message(self, response: Any) -> Any:
         return response.choices[0].message
 
-    def search_in_surroundings(self, query: str, type: Optional[str], k: int) -> str:
-        if not k in [1, 2]:
-            return f"search_in_surroundings({query}, {type}, {k}) only supports k=1 or k=2.\n"
-
-        subgraph = self.graph.get_khop_subgraph(self.node, k)
-        search_nodes_df = subgraph.nodes_df
-
-        if type:
-            search_nodes_df = search_nodes_df[search_nodes_df["type"] == type]
-
-        if query:
-            search_nodes_df_details = search_nodes_df[
-                (search_nodes_df["details"].str.contains(query, case=False))
-            ]
-            candidates_details = (
-                [
-                    self.graph.get_node_by_index(idx)
-                    for idx in search_nodes_df_details["index"].tolist()
-                ]
-                if search_nodes_df_details is not None
-                else []
-            )
-
-            sentences = []
-            for candidate in candidates_details:
-                match_in_candidate = ""
-                for sentence in str(candidate.details).split("."):
-                    if query in sentence:
-                        match_in_candidate += f"(...) {sentence}"
-                sentences.append(match_in_candidate)
-
-            more_candidates = [
-                f"{str(candidate)}: {sentence}"
-                for candidate, sentence in zip(candidates_details, sentences)
-                if sentence != ""
-            ]
-
-            search_nodes_df = search_nodes_df[
-                (search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query)))
-                | (search_nodes_df["name"].str.contains(query, case=False))
-            ]
-
-        candidates = (
-            [self.graph.get_node_by_index(idx) for idx in search_nodes_df["index"].tolist()]
-            if search_nodes_df is not None
-            else []
-        )
-
-        if not candidates:
-            return f"search_in_surroundings({query}, {type}, {k}) didn't return any results. Consider widening your search or changing the strategy.\n"
-
-        if len(candidates) > 20:
-            return (
-                f"search_in_surroundings({query}, {type}, {k}) returned too many candidates ({len(candidates)}), showing first 20. "
-                "Consider searching for more specific terms or filter by type.\n"
-                + "\n".join([str(node) for node in candidates[:20]])
-                + "\nIf you found what you were looking for you may want to find the connections between the current node "
-                f"`{self.node.name}` and any of the candidate nodes by using the `find_paths` function.\n"
-            )
-
-        return (
-            f"search_in_surroundings({query}, {type}, {k}) gave the following results\n"
-            + "\n".join([str(node) for node in candidates])
-            + "\nIf you found what you were looking for you may want to find the connections between the current node "
-            f"`{self.node.name}` and any of the candidate nodes by using the `find_paths` function.\n"
-        )
-
-    def find_paths(self, node: Node) -> str:
-        try:
-            paths = self.graph.find_paths_of_length_2(self.node, node)
-        except Exception as e:
-            paths = []
-
-        # NOTE: THIS SHOULD NEVER HAPPEN. If a node is in the 2-hop neighborhood it means there's at least one path of length 2
-        if not paths:
-            return f"find_paths({self.node.name}, {node.name}) didn't return any results. Consider widening your search or changing the strategy.\n"
-
-        if len(paths) > 30:
-            return (
-                f"There are too many paths ({len(paths)}) between the current node `{self.node.name}` and `{node.name}`. "
-                "Showing the first 30 paths. Consider refining your search or narrowing down the nodes of interest.\n"
-                f"The first 30 paths between the current node `{self.node.name}` and `{node.name}` are\n"
-                + "\n".join([str(path) for path in list(paths)[:30]])
-                + "\nconsider if any of these paths can help you answer the question\n"
-            )
-
-        return (
-            f"The paths between the current node `{self.node.name}` and `{node.name}` are\n"
-            + "\n".join([str(path) for path in paths])
-            + "\nconsider if any of these paths can help you answer the question\n"
-        )
-
-    def submit_answer(self, answer: list[Node]) -> list[Node]:
-        self.final_answer = answer
-        return answer
-
     def select_tools(self) -> Any:
         messages = [{"role": "system", "content": self.system_prompt}] + self.message_history
 
-        response = completion(
-            model=self.model,
-            messages=messages,
-            tools=[tool.schema() for tool in self.tools],
-            tool_choice="required",
-        )
-
+        try:
+            response = completion(
+                model=self.model,
+                messages=messages,
+                tools=[tool.schema() for tool in self.tools],
+                tool_choice="required",
+            )
+        except Exception as e:
+            print(f"Error during completion: {e}")
+            raise e
         assistant_message = {"role": "assistant"}
 
         if self.get_message(response).content:
@@ -200,10 +106,24 @@ class SubgraphExplorerAgent:
             {"role": "tool", "content": tool_response, "tool_call_id": tool_call_id}
         )
 
-    def get_tool(self, selected_tool: Any) -> Any:
+    def call_tool(self, selected_tool: Any) -> Any:
+        function_name = selected_tool.function.name
+        args = json.loads(selected_tool.function.arguments)
+
         for tool in self.tools:
-            if tool.name == selected_tool.function.name:
-                return tool
+            if tool.name == function_name:
+                break
+
+        if function_name == "find_paths":
+            return tool(src_index=self.node.index, dst_index=args["dst_node_index"])
+        elif function_name == "search_in_surroundings":
+            return tool(
+                node=self.node, query=args.get("query", ""), type=args.get("type", ""), k=args["k"]
+            )
+        elif function_name == "submit_answers":
+            return tool(agent=self, answer_node_indices=args["answer_node_indices"])
+        else:
+            raise ValueError(f"Unknown tool: {function_name}")
 
     def answer(self) -> list[Node]:
         state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(
@@ -219,11 +139,7 @@ class SubgraphExplorerAgent:
             selected_tools = self.select_tools()
 
             for selected_tool in selected_tools:
-                tool = self.get_tool(selected_tool)
-
-                arguments = json.loads(selected_tool.function.arguments)
-                tool_response = tool(arguments)
-
+                tool_response = self.call_tool(selected_tool)
                 self.submit_tool_response(tool_response, selected_tool.id)
                 print(
                     tool_response,
