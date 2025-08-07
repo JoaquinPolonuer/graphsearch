@@ -86,6 +86,7 @@ class SearchInSurroundingsTool(Tool):
         if type:
             search_nodes_df = search_nodes_df[search_nodes_df["type"] == type]
 
+        # Maybe we should filter candidates here to make this faster. Anyway we are only showing the first 15
         if not query:
             candidates = [
                 str(self.graph.get_node_by_index(idx)) for idx in search_nodes_df["index"].tolist()
