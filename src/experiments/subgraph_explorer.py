@@ -22,13 +22,15 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
 ]:
 
     if os.path.exists(results_dir / f"{question_index}.json"):
-        with open(results_dir / f"{question_index}.json", "r") as f:
-            log = json.load(f)
-        if set(log.get("agent_answer_indices")).issuperset(set(log.get("answer_indices"))):
-            print(f"Skipping {question_index} as it was correctly solved.")
-            continue
-        else:
-            print(f"Re-solving {question_index} as it was not correctly solved.")
+        # with open(results_dir / f"{question_index}.json", "r") as f:
+        #     log = json.load(f)
+        # if set(log.get("agent_answer_indices")).issuperset(set(log.get("answer_indices"))):
+        #     print(f"Skipping {question_index} as it was correctly solved.")
+        #     continue
+        # else:
+        #     print(f"Re-solving {question_index} as it was not correctly solved.")
+        print(f"Skipping {question_index} as it was already processed.")
+        continue
 
     entities = extract_entities_from_question(question)
 
