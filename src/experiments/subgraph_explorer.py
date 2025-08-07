@@ -45,6 +45,16 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
     agent_answer_nodes: set[Node] = set()
     for starting_node in starting_nodes:
         subgraph = graph.get_khop_subgraph(starting_node, k=2)
+
+        # subgraph.nodes_df["similarity"] = subgraph.nodes_df["index"].apply(
+        #     lambda x: torch.matmul(
+        #         query_embeddings[question_index].detach().clone(),
+        #         doc_embeddings[x].detach().clone().T,
+        #     ).item()
+        # )
+
+        # subgraph.nodes_df = subgraph.nodes_df.sort_values(by="similarity", ascending=False)
+
         agent = SubgraphExplorerAgent(
             node=starting_node,
             graph=subgraph,
