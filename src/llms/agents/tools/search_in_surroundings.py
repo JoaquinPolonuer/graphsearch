@@ -18,10 +18,8 @@ class SearchInSurroundingsTool(Tool):
             graph=graph,
         )
 
-    def _format_response(
-        self, node, query, type, k, candidates: list[str], candidates_matching_details: list[str]
-    ) -> str:
-        if not candidates:  # and (not candidates_matching_details):
+    def _format_response(self, node, query, type, k, candidates: list[str]) -> str:
+        if not candidates:
             return f"search_in_surroundings(query={query}, type={type}, k={k}) didn't find anything. Consider widening your search or changing the strategy.\n"
 
         response = ""
@@ -57,20 +55,12 @@ class SearchInSurroundingsTool(Tool):
             else:
                 response += f"search_in_surroundings(query={query}, k={k}) found:\n\n"
 
-            # if candidates:
             response += "\n\n".join(candidates[:15]) + "\n\n"
             response += (
                 f"(Showing 15 of {len(candidates)} results. You may want to refine your search)\n"
                 if len(candidates) > 15
                 else "" + "\n\n"
             )
-            # else:
-            #     response += "\n\n".join(candidates_matching_details[:5]) + "\n\n"
-            #     response += (
-            #         f"(Showing 5 of {len(candidates_matching_details)} results. You may want to refine your search)\n"
-            #         if len(candidates_matching_details) > 5
-            #         else "" + "\n\n"
-            #     )
 
         response += (
             "If you found what you were looking for you can submit answer.\n"
@@ -93,29 +83,14 @@ class SearchInSurroundingsTool(Tool):
             candidates = [
                 str(self.graph.get_node_by_index(idx)) for idx in search_nodes_df["index"].tolist()
             ]
-            return self._format_response(node, query, type, k, candidates, [])
+            return self._format_response(node, query, type, k, candidates)
         else:
             nodes_matching_name_df = search_nodes_df[
                 (search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query)))
                 | (search_nodes_df["name"].str.contains(query, case=False))
             ]
 
-            # nodes_matching_details_df = search_nodes_df[
-            #     (search_nodes_df["details"].str.contains(query, case=False))
-            # ]
-
-            # candidates_matching_details: list[str] = []
-            # for idx in nodes_matching_details_df["index"].tolist():
-            #     candidate = self.graph.get_node_by_index(idx)
-
-            #     match_in_candidate = ""
-            #     for sentence in str(candidate.details).split("."):
-            #         if query.lower() in sentence.lower():
-            #             match_in_candidate += f"(...) {sentence}"
-
-            #     candidates_matching_details.append(f"{str(candidate)}: {match_in_candidate}")
-
-            candidates_matching_name: list[str] = (
+            candidates: list[str] = (
                 [
                     str(self.graph.get_node_by_index(idx))
                     for idx in nodes_matching_name_df["index"].tolist()
@@ -123,9 +98,26 @@ class SearchInSurroundingsTool(Tool):
                 if nodes_matching_name_df is not None
                 else []
             )
-            return self._format_response(
-                node, query, type, k, candidates_matching_name, []  # candidates_matching_details
-            )
+
+            nodes_matching_summary_df = search_nodes_df[
+                (search_nodes_df["summary"].str.contains(query, case=False))
+                & (~search_nodes_df["index"].isin(nodes_matching_name_df["index"]))
+            ]
+
+            for i, row in nodes_matching_summary_df.iterrows():
+                idx = row["index"]
+                summary = row["summary"]
+
+                candidate = self.graph.get_node_by_index(idx)
+
+                index_in_summary = summary.lower().find(query.lower())
+                match_in_summary = summary[
+                    max(0, index_in_summary - 50) : min(len(summary), index_in_summary + 50)
+                ]
+
+                candidates.append(f"{str(candidate)}: ...{match_in_summary}...")
+
+            return self._format_response(node, query, type, k, candidates)
 
     def schema(self) -> dict[str, Any]:
         return {

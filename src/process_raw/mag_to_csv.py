@@ -25,15 +25,6 @@ edges_df = pd.DataFrame(
 nodes_df = pd.DataFrame(node_info.values())
 nodes_df["index"] = nodes_df.index
 
-name_column = {
-    "paper": "title",
-    "author": "DisplayName",
-    "institution": "DisplayName",
-    "field_of_study": "DisplayName",
-}
-
-nodes_df["name"] = nodes_df.apply(lambda row: row[name_column[row["type"]]], axis=1)
-
 os.makedirs("data/graphs/csv/mag/", exist_ok=True)
 nodes_df.to_csv("data/graphs/csv/mag/nodes.csv", index=False)
 edges_df.to_csv("data/graphs/csv/mag/edges.csv", index=False)
