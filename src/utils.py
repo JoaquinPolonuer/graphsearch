@@ -20,8 +20,7 @@ def load_embeddings(graph_name: str):
         / f"graphs/embeddings/{graph_name}/text-embedding-ada-002/doc/candidate_emb_dict.pt"
     )
     query_embeddings = torch.load(
-        DATA_DIR
-        / f"graphs/embeddings/{graph_name}/text-embedding-ada-002/query/query_emb_dict.pt"
+        DATA_DIR / f"graphs/embeddings/{graph_name}/text-embedding-ada-002/query/query_emb_dict.pt"
     )
     return doc_embeddings, query_embeddings
 
@@ -46,7 +45,7 @@ def iterate_qas(qas, limit=None, shuffle=False, subset=None):
         questions = [questions[i] for i in indices]
         answer_indices_list = [answer_indices_list[i] for i in indices]
 
-    return zip(question_indices, questions, answer_indices_list)
+    return list(zip(question_indices, questions, answer_indices_list))
 
 
 def setup_results_dir(graph_name: str, experiment_name: str):
