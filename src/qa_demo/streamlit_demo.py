@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import random
+from collections import deque
 
 import sys
 from pathlib import Path
@@ -44,49 +45,42 @@ CONNECTION_PHRASES = [
     "Navigating from",
 ]
 
-st.set_page_config(page_title="g1 prototype", page_icon="🧠", layout="wide")
 
+st.set_page_config(page_title="g1 prototype", page_icon="🧠", layout="wide")
 st.title("Graph Reasoning Agent")
 
-# Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input
 if question := st.chat_input("What would you like to know?"):
-    # Display user message
     with st.chat_message("user"):
         st.markdown(question)
     st.session_state.messages.append({"role": "user", "content": question})
 
-    # Display assistant response
     with st.chat_message("assistant"):
         steps_container = st.expander("Reasoning Steps", expanded=True)
+        with steps_container:
+            steps_placeholder = st.empty()
+
+        recent_steps = deque(maxlen=4)  # keep only last 5
         final_answer_container = st.empty()
         time_container = st.empty()
 
-        # Extract entities and get starting nodes
         entities = extract_entities_from_question(question)
-        all_nodes = []
-        all_scores = []
+        all_nodes, all_scores = [], []
         for entity in entities:
             nodes, scores = graph.search_nodes(entity, k=3)
             all_nodes.extend(nodes)
             all_scores.extend(scores)
 
         starting_nodes = filter_relevant_nodes(question, all_nodes, graph)
-
-        # Initialize agent processing
         agent_answer_nodes: set[Node] = set()
         start_time = time.time()
-        step_count = 0
 
-        # Process each starting node with real-time display
         for starting_node in starting_nodes:
             subgraph = graph.get_khop_subgraph(starting_node, k=2)
             agent = SubgraphExplorerAgent(
@@ -95,77 +89,60 @@ if question := st.chat_input("What would you like to know?"):
                 question=question,
             )
 
-            # Stream reasoning steps in real-time
             for selected_tool, final_answer in agent.answer(max_steps=15):
-                step_count += 1
                 tool_name = selected_tool.function.name
                 tool_arguments = json.loads(selected_tool.function.arguments)
 
-                # Get the last tool response from message history
-                # tool_response = ""
-                # if len(agent.message_history) >= 2:
-                #     last_message = agent.message_history[-1]
-                #     if last_message.get("role") == "tool":
-                #         tool_response = last_message.get("content", "")
+                # build lines for this step
+                lines = []
+                if tool_name == "search_in_surroundings":
+                    search = tool_arguments.get("query") or tool_arguments.get("type")
+                    phrase = random.choice(SEARCH_PHRASES)
+                    if search:
+                        lines.append(f"{phrase} `{search}` nodes around **{starting_node.name}**")
+                    else:
+                        lines.append(f"{phrase} nodes around **{starting_node.name}**")
 
-                # Display step in real-time
-                with steps_container:
+                elif tool_name == "find_paths":
+                    source = starting_node.name
+                    target = graph.get_node_by_index(tool_arguments.get("dst_node_index")).name
+                    phrase = random.choice(CONNECTION_PHRASES)
+                    lines.append(f"{phrase} **{source}** and **{target}**")
 
-                    if tool_name == "search_in_surroundings":
-                        search = (
-                            tool_arguments.get("query")
-                            if tool_arguments.get("query")
-                            else tool_arguments.get("type")
+                elif tool_name == "add_to_answer":
+                    idxs = tool_arguments.get("answer_node_indices", [])
+                    if idxs:
+                        relevant_nodes = [graph.get_node_by_index(i) for i in idxs]
+                        lines.append(
+                            f"**Found {len(relevant_nodes)} relevant nodes near {starting_node.name}**"
                         )
+                        agent_answer_nodes = agent_answer_nodes.union(set(relevant_nodes))
 
-                        search_phrase = random.choice(SEARCH_PHRASES)
-                        if search:
-                            st.markdown(
-                                f"{search_phrase} `{search}` nodes around **{starting_node.name}**"
-                            )
-                        else:
-                            st.markdown(f"{search_phrase} nodes around **{starting_node.name}**")
-                        # st.markdown(tool_response)
+                # add divider after step
+                lines.append("---")
 
-                    if tool_name == "find_paths":
-                        source = starting_node.name
-                        target = graph.get_node_by_index(tool_arguments.get("dst_node_index")).name
-                        connection_phrase = random.choice(CONNECTION_PHRASES)
-                        st.markdown(f"{connection_phrase} **{source}** and **{target}**")
-                        # st.markdown(tool_response)
+                # store only last 5
+                recent_steps.append(lines)
 
-                    if tool_name == "add_to_answer":
-                        if tool_arguments.get("answer_node_indices", []):
-                            relevant_nodes_indices = tool_arguments.get("answer_node_indices", [])
-                            
-                            relevant_nodes = [
-                                graph.get_node_by_index(idx) for idx in relevant_nodes_indices
-                            ]
-                            st.markdown(
-                                f"**Found {len(relevant_nodes)} relevant nodes near {starting_node.name}**"
-                            )
-                            agent_answer_nodes = agent_answer_nodes.union(set(relevant_nodes))
+                # re-render last 5
+                with steps_placeholder.container():
+                    for step_lines in recent_steps:
+                        for s in step_lines:
+                            st.markdown(s)
 
-                    st.divider()
-
-        # Generate and display final answer
         answer = answer_based_on_nodes(
             question=question,
             nodes=list(agent_answer_nodes),
         )
 
         total_thinking_time = time.time() - start_time
-
-        final_answer_container.markdown(f"### Final Answer")
+        final_answer_container.markdown("### Final Answer")
         final_answer_container.markdown(answer)
-
         time_container.markdown(f"**Total thinking time: {total_thinking_time:.2f} seconds**")
 
-        # Add the final response to chat history
         full_response = f"{answer}\n\n**Total thinking time: {total_thinking_time:.2f} seconds**"
         st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-        # Add button to ask something else
         if st.button("Ask something else"):
             st.session_state.messages = []
             st.rerun()
