@@ -134,22 +134,19 @@ if question := st.chat_input("What would you like to know?"):
                         st.markdown(f"{connection_phrase} **{source}** and **{target}**")
                         # st.markdown(tool_response)
 
-                    if tool_name == "submit_answers":
-                        relevant_nodes = tool_arguments.get("answer_node_indices", [])
-                        if relevant_nodes:
+                    if tool_name == "add_to_answer":
+                        if tool_arguments.get("answer_node_indices", []):
+                            relevant_nodes_indices = tool_arguments.get("answer_node_indices", [])
+                            
+                            relevant_nodes = [
+                                graph.get_node_by_index(idx) for idx in relevant_nodes_indices
+                            ]
                             st.markdown(
                                 f"**Found {len(relevant_nodes)} relevant nodes near {starting_node.name}**"
                             )
-                        else:
-                            st.markdown(
-                                f"*Didn't find relevant information near {starting_node.name}**"
-                            )
+                            agent_answer_nodes = agent_answer_nodes.union(set(relevant_nodes))
 
                     st.divider()
-
-                if final_answer is not None:
-                    agent_answer_nodes = agent_answer_nodes.union(set(final_answer))
-                    break
 
         # Generate and display final answer
         answer = answer_based_on_nodes(
