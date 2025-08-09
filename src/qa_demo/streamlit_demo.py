@@ -129,15 +129,23 @@ if question := st.chat_input("What would you like to know?"):
                     for step_lines in recent_steps:
                         for s in step_lines:
                             st.markdown(s)
+        
+        # Show loading message
+        final_answer_container.markdown("### Final Answer")
+        final_answer_container.markdown("_Generating KG-grounded answer..._")
 
+        # Generate the answer
         answer = answer_based_on_nodes(
             question=question,
             nodes=list(agent_answer_nodes),
         )
 
         total_thinking_time = time.time() - start_time
+
+        # Replace with actual answer
         final_answer_container.markdown("### Final Answer")
         final_answer_container.markdown(answer)
+
         time_container.markdown(f"**Total thinking time: {total_thinking_time:.2f} seconds**")
 
         full_response = f"{answer}\n\n**Total thinking time: {total_thinking_time:.2f} seconds**"
