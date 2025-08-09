@@ -11,7 +11,7 @@ from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
 
-graph_name = "mag"
+graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
@@ -20,15 +20,15 @@ for question_index, question, answer_indices in list(iterate_qas(qas, limit=1000
     :100
 ]:
     if os.path.exists(results_dir / f"{question_index}.json"):
-        with open(results_dir / f"{question_index}.json", "r") as f:
-            log = json.load(f)
-        if set(log.get("agent_answer_indices")).issuperset(set(log.get("answer_indices"))):
-            print(f"Skipping {question_index} as it was correctly solved.")
-            continue
-        else:
-            print(f"Re-solving {question_index} as it was not correctly solved.")
-        # print(f"Skipping {question_index} as it was already processed.")
-        # continue
+        # with open(results_dir / f"{question_index}.json", "r") as f:
+        #     log = json.load(f)
+        # if set(log.get("agent_answer_indices")).issuperset(set(log.get("answer_indices"))):
+        #     print(f"Skipping {question_index} as it was correctly solved.")
+        #     continue
+        # else:
+        #     print(f"Re-solving {question_index} as it was not correctly solved.")
+        print(f"Skipping {question_index} as it was already processed.")
+        continue
 
     entities = extract_entities_from_question(question)
 

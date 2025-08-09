@@ -12,9 +12,20 @@ class AddToAnswer(Tool):
         )
 
     def __call__(self, agent, answer_node_indices) -> str:
-        answer_nodes = [self.graph.get_node_by_index(name) for name in answer_node_indices]
+        answer_nodes = []
+        error_indices = []
+        for index in answer_node_indices:
+            try:
+                answer_nodes.append(self.graph.get_node_by_index(index))
+            except ValueError:
+                error_indices.append(index)
+
         agent.answer_nodes.extend(answer_nodes)
-        return "Added the following nodes to the answer:" + ",".join([str(n) for n in answer_nodes])
+        res = "Added the following nodes to the answer:" + ",".join([str(n) for n in answer_nodes])
+        if error_indices:
+            res += f"\nThe following indices were not found in the graph: {error_indices}"
+
+        return res
 
     def schema(self) -> dict[str, Any]:
         return {
