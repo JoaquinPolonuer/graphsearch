@@ -11,7 +11,7 @@ def fuzzy_match(name, pattern, threshold=90):
 
 
 class SearchInSurroundingsTool(Tool):
-    def __init__(self, agent, graph):
+    def __init__(self, graph):
         super().__init__(
             name="search_in_surroundings",
             description="Search in surroundings (1 or 2 hop) for a specific keyword, in nodes with a specific type",

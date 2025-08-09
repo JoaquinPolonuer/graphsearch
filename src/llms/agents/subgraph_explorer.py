@@ -6,7 +6,7 @@ from litellm import completion
 from graph_types.graph import Graph, Node
 from src.llms.agents.tools.find_paths import FindPathsTool
 from src.llms.agents.tools.search_in_surroundings import SearchInSurroundingsTool
-from src.llms.agents.tools.submit_answers import SubmitAnswersTool
+from src.llms.agents.tools.add_to_answers import AddToAnswer
 
 from src.prompts.prompts import (
     SUBGRAPH_EXPLORER_INITIAL_STATE,
@@ -15,7 +15,6 @@ from src.prompts.prompts import (
     PRIME_SUBGRAPH_EXPLORER_SYSTEM,
 )
 from fuzzywuzzy import fuzz
-from pydantic import BaseModel, field_validator
 
 
 def fuzzy_match(name, pattern, threshold=90):
@@ -34,9 +33,9 @@ class SubgraphExplorerAgent:
         self.model = model
         self.message_history = []
         self.tools = [
-            SearchInSurroundingsTool(self, graph),
-            FindPathsTool(self, graph),
-            SubmitAnswersTool(self, graph),
+            SearchInSurroundingsTool(graph),
+            FindPathsTool(graph),
+            AddToAnswer(graph),
         ]
 
         self.graph = graph
@@ -45,7 +44,7 @@ class SubgraphExplorerAgent:
 
         self.path = []
 
-        self.final_answer = None
+        self.answer_nodes = []
 
         if "prime" in graph.name:
             system_prompt = PRIME_SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
@@ -118,12 +117,12 @@ class SubgraphExplorerAgent:
             return tool(
                 node=self.node, query=args.get("query", ""), type=args.get("type", ""), k=args["k"]
             )
-        elif function_name == "submit_answers":
+        elif function_name == "add_to_answer":
             return tool(agent=self, answer_node_indices=args["answer_node_indices"])
         else:
             raise ValueError(f"Unknown tool: {function_name}")
 
-    def answer(self, max_steps=10) -> Generator[tuple[str, Optional[list[Node]]], None, None]:
+    def answer(self, max_steps=10) -> Generator[tuple[str, list[Node]], None, None]:
         state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(
             question=self.question,
             node=self.node.name,
@@ -144,4 +143,5 @@ class SubgraphExplorerAgent:
                     "================================================",
                 )
 
-                yield selected_tool, self.final_answer
+                yield selected_tool, self.answer_nodes
+        return

@@ -31,10 +31,10 @@ def send_explorers(graph, question, starting_nodes):
             graph=subgraph,
             question=question,
         )
-        for selected_tool, final_answer in agent.answer():
-            if final_answer is not None:
-                agent_answer_nodes = agent_answer_nodes.union(set(final_answer))
-                break
+        for selected_tool, answer_nodes in agent.answer():
+            pass
+
+        agent_answer_nodes = agent_answer_nodes.union(set(answer_nodes))
         message_histories.append(agent.message_history)
 
     agent_answer_indices = [node.index for node in agent_answer_nodes]

@@ -3,7 +3,7 @@ from src.llms.agents.tools.tools import Tool
 
 
 class FindPathsTool(Tool):
-    def __init__(self, agent, graph):
+    def __init__(self, graph):
         super().__init__(
             name="find_paths",
             description="Find all the paths from the current node to a given node",

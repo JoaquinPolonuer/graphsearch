@@ -2,18 +2,19 @@ from typing import Any
 from src.llms.agents.tools.tools import Tool
 from graph_types.graph import Graph, Node
 
-class SubmitAnswersTool(Tool):
-    def __init__(self, agent, graph):
+
+class AddToAnswer(Tool):
+    def __init__(self, graph):
         super().__init__(
-            name="submit_answers",
-            description="Submit the final answer based on the current exploration",
+            name="add_to_answer",
+            description="Add nodes to the answer.",
             graph=graph,
         )
 
     def __call__(self, agent, answer_node_indices) -> str:
         answer_nodes = [self.graph.get_node_by_index(name) for name in answer_node_indices]
-        agent.final_answer = answer_nodes
-        return ",".join([str(n) for n in answer_nodes])
+        agent.answer_nodes.extend(answer_nodes)
+        return "Added the following nodes to the answer:" + ",".join([str(n) for n in answer_nodes])
 
     def schema(self) -> dict[str, Any]:
         return {
@@ -39,7 +40,3 @@ class SubmitAnswersTool(Tool):
                 },
             },
         }
-
-    def submit_answer(self, answer: list[Node]) -> list[Node]:
-        self.final_answer = answer
-        return answer
