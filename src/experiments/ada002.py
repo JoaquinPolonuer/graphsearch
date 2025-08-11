@@ -1,3 +1,4 @@
+import torch
 import pandas as pd
 import sys
 from pathlib import Path
@@ -10,14 +11,18 @@ from graph_types.graph import Node
 
 graph_name = "prime"
 graph, qas = load_graph_and_qas(graph_name)
-results_dir = setup_results_dir(graph.name, "bm25")
+doc_embeddings, query_embeddings = load_embeddings(graph_name)
+results_dir = setup_results_dir(graph.name, "ada002")
 
 for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
-    bm25_nodes, scores = graph.search_nodes(question, k=100, mode="summary")
+    question_embedding = query_embeddings[question_index]
+
+    ada002_indices = semantic_sort(doc_embeddings.keys(), question_embedding, doc_embeddings)[:100]
+
     save_log(
         {
             "question": question,
-            "bm25_indices": [node.index for node in bm25_nodes],
+            "ada002_indices": ada002_indices,
             "answer_indices": answer_indices,
         },
         results_dir=results_dir,

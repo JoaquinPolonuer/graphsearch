@@ -106,12 +106,21 @@ class Path(BaseModel):
 
 
 class Graph(BaseModel):
+
     name: str
     nodes_df: pd.DataFrame
     edges_df: pd.DataFrame
+    index: Optional["ElasticsearchIndex"] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+    def __init__(self, **data):
+        from src.keyword_search.index import ElasticsearchIndex
+
+        super().__init__(**data)
+
+        self.index = ElasticsearchIndex(name=f"{self.name}_index")
 
     @property
     def node_types(self) -> list[str]:
@@ -240,10 +249,13 @@ class Graph(BaseModel):
             edges_df=edges_df,
         )
 
-    def search_nodes(self, query: str, k=10) -> tuple[list[Node], list[float]]:
-        from src.keyword_search.index import ElasticsearchIndex
-
-        response = ElasticsearchIndex(name=f"{self.name}_index").search(query=query, k=k)
+    def search_nodes(self, query: str, k=10, mode="default") -> tuple[list[Node], list[float]]:
+        if mode == "default":
+            response = self.index.search(query=query, k=k)
+        elif mode == "summary":
+            response = self.index.search_summary(query=query, k=k)
+        else:
+            raise ValueError(f"Unsupported search mode: {mode}")
         hits = response.get("hits", {}).get("hits", [])
         return [self.node_from_doc(hit["_source"]) for hit in hits], [hit["_score"] for hit in hits]
 

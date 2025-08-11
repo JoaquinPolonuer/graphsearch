@@ -8,7 +8,7 @@ from index import ElasticsearchIndex
 
 from graph_types.graph import Graph
 
-graph = Graph.load("amazon")
+graph = Graph.load("prime")
 index = ElasticsearchIndex(name=f"{graph.name}_index")
 index.delete_if_exists()
 index.create(

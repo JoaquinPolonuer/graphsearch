@@ -131,6 +131,16 @@ class ElasticsearchIndex(BaseModel):
         )
         return response.json()
 
+    def search_summary(self, query: str, k: int = 10) -> dict:
+        search_body = {"size": k, "query": {"match": {"summary": {"query": query}}}}
+
+        response = requests.post(
+            f"{self.base_url}/{self.name}/_search",
+            json=search_body,
+            headers={"Content-Type": "application/json"},
+            timeout=10,
+        )
+        return response.json()
 
 if __name__ == "__main__":
     # Example usage
