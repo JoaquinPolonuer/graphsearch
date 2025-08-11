@@ -9,7 +9,7 @@ from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_re
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
 from graph_types.graph import Node
 
-graph_name = "prime"
+graph_name = "mag"
 graph, qas = load_graph_and_qas(graph_name)
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 results_dir = setup_results_dir(graph.name, "ada002")
