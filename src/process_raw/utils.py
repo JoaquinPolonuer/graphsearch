@@ -37,33 +37,33 @@ def add_summary_amazon(row) -> str:
     else:
         feature_text = ""
 
-    # We have a problem here
-    # if row["review"]:
-    #     review_text = "- reviews: \n"
-    #     scores = [
-    #         0 if pd.isnull(review["vote"]) else int(review["vote"].replace(",", ""))
-    #         for review in row["review"]
-    #     ]
-    #     ranks = np.argsort(-np.array(scores))
-    #     for i, review_idx in enumerate(ranks):
-    #         review = row["review"][review_idx]
-    #         review_text += f'#{review_idx + 1}:\nsummary: {review["summary"]}\ntext: "{review["reviewText"]}"\n'
-    #         if i > MAX_ENTRIES:
-    #             break
-    # else:
-    #     review_text = ""
+    if row["review"]:
+        row_review = json.loads(row["review"])
+        review_text = "- reviews: \n"
+        scores = [
+            0 if pd.isnull(review["vote"]) else int(review["vote"].replace(",", ""))
+            for review in row_review
+        ]
+        ranks = np.argsort(-np.array(scores))
+        for i, review_idx in enumerate(ranks):
+            review = row_review[review_idx]
+            review_text += f'#{review_idx + 1}:\nsummary: {review["summary"]}\ntext: "{review["reviewText"]}"\n'
+            if i > MAX_ENTRIES:
+                break
+    else:
+        review_text = ""
 
-    # if row["qa"]:
-    #     row_qa = eval(row["qa"])
-    #     qa_text = "- Q&A: \n"
-    #     for qa_idx, qa in enumerate(row_qa):
-    #         qa_text += f'#{qa_idx + 1}:\nquestion: "{qa["question"]}"\nanswer: "{qa["answer"]}"\n'
-    #         if qa_idx > MAX_ENTRIES:
-    #             break
-    # else:
-    #     qa_text = ""
+    if row["qa"]:
+        row_qa = json.loads(row["qa"])
+        qa_text = "- Q&A: \n"
+        for qa_idx, qa in enumerate(row_qa):
+            qa_text += f'#{qa_idx + 1}:\nquestion: "{qa["question"]}"\nanswer: "{qa["answer"]}"\n'
+            if qa_idx > MAX_ENTRIES:
+                break
+    else:
+        qa_text = ""
 
-    summary += feature_text  # + review_text + qa_text
+    summary += feature_text + review_text + qa_text
 
     # if add_rel:
     #     summary += self.get_rel_info(idx)
