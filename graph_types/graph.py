@@ -13,6 +13,7 @@ class Node(BaseModel):
     name: str
     index: int
     type: str
+    summary: str
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name}, index={self.index}, type={self.type})"
@@ -28,6 +29,7 @@ class Node(BaseModel):
             "name": self.name,
             "index": self.index,
             "type": self.type,
+            "summary": self.summary,
         }
 
     @classmethod
@@ -36,6 +38,7 @@ class Node(BaseModel):
             name=data["name"],
             index=data["index"],
             type=data["type"],
+            summary=data.get("summary", ""),
         )
 
     @classmethod
@@ -44,6 +47,7 @@ class Node(BaseModel):
             name=row["name"],
             index=row["index"],
             type=row["type"],
+            summary=row.get("summary", ""),
         )
 
 

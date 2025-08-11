@@ -18,6 +18,7 @@ class ProductNode(Node):
             name=str(row["title"]),
             index=row["index"],
             type=row["type"],
+            summary=row.get("summary", ""),
         )
 
 
@@ -28,6 +29,7 @@ class BrandNode(Node):
             name=str(row["brand_name"]),
             index=row["index"],
             type=row["type"],
+            summary=row.get("summary", ""),
         )
 
 
@@ -38,6 +40,7 @@ class ColorNode(Node):
             name=str(row["color_name"]),
             index=row["index"],
             type=row["type"],
+            summary=row.get("summary", ""),
         )
 
 
@@ -48,6 +51,7 @@ class CategoryNode(Node):
             name=str(row["category_name"]),
             index=row["index"],
             type=row["type"],
+            summary=row.get("summary", ""),
         )
 
 

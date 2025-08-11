@@ -69,4 +69,105 @@ def add_summary_amazon(row) -> str:
     #     summary += self.get_rel_info(idx)
     # if compact:
     #     summary = compact_text(summary)
+
+    return summary
+
+
+def add_summary_to_prime(row) -> str:
+    summary = f"- name: {row['name']}\n"
+    summary += f"- type: {row['type']}\n"
+    summary += f"- source: {row['source']}\n"
+
+    gene_protein_text_explain = {
+        "name": "gene name",
+        "type_of_gene": "gene types",
+        "alias": "other gene names",
+        "other_names": "extended other gene names",
+        "genomic_pos": "genomic position",
+        "generif": "PubMed text",
+        "interpro": "protein family and classification information",
+        "summary": "protein summary text",
+    }
+
+    feature_text = f"- details:\n"
+    feature_cnt = 0
+
+    if row["details"]:
+        for key, value in json.loads(row["details"]).items():
+            if str(value) in ["", "nan"] or key.startswith("_") or "_id" in key:
+                continue
+            if row["type"] == "gene/protein" and key in gene_protein_text_explain.keys():
+                if "interpro" in key:
+                    if isinstance(value, dict):
+                        value = [value]
+                    value = [v["desc"] for v in value]
+                if "generif" in key:
+                    value = "; ".join([v["text"] for v in value])
+                    value = " ".join(value.split(" ")[:50000])
+                if "genomic_pos" in key:
+                    if isinstance(value, list):
+                        value = value[0]
+                feature_text += f"  - {key} ({gene_protein_text_explain[key]}): {value}\n"
+                feature_cnt += 1
+            else:
+                feature_text += f"  - {key}: {value}\n"
+                feature_cnt += 1
+    if feature_cnt == 0:
+        feature_text = ""
+
+    summary += feature_text
+
+    # if add_rel:
+    #     summary += self.get_rel_info(idx, n_rel=n_rel)
+    # if compact:
+    #     summary = compact_text(summary)
+
+    return summary
+
+
+def add_summary_to_mag(row) -> str:
+    if row["type"] == "author":
+        summary = f"- author name: {row['DisplayName']}\n"
+        if row["PaperCount"] != -1:
+            summary += f"- author paper count: {row['PaperCount']}\n"
+        if row["CitationCount"] != -1:
+            summary += f"- author citation count: {row['CitationCount']}\n"
+        summary = summary.replace("-1", "Unknown")
+
+    elif row["type"] == "paper":
+        summary = f" - paper title: {row['title']}\n"
+        summary += " - abstract: " + row["abstract"].replace("\r", "").rstrip("\n") + "\n"
+        if str(row["Date"]) != "-1":
+            summary += f" - publication date: {row['Date']}\n"
+        if str(row["OriginalVenue"]) != "-1":
+            summary += f" - venue: {row['OriginalVenue']}\n"
+        elif str(row["JournalDisplayName"]) != "-1":
+            summary += f" - journal: {row['JournalDisplayName']}\n"
+        elif str(row["ConferenceSeriesDisplayName"]) != "-1":
+            summary += f" - conference: {row['ConferenceSeriesDisplayName']}\n"
+        elif str(row["ConferenceInstancesDisplayName"]) != "-1":
+            summary += f" - conference: {row['ConferenceInstancesDisplayName']}\n"
+
+    elif row["type"] == "field_of_study":
+        summary = f" - field of study: {row['DisplayName']}\n"
+        if row["PaperCount"] != -1:
+            summary += f"- field paper count: {row['PaperCount']}\n"
+        if row["CitationCount"] != -1:
+            summary += f"- field citation count: {row['CitationCount']}\n"
+        summary = summary.replace("-1", "Unknown")
+
+    elif row["type"] == "institution":
+        summary = f" - institution: {row['DisplayName']}\n"
+        if row["PaperCount"] != -1:
+            summary += f"- institution paper count: {row['PaperCount']}\n"
+        if row["CitationCount"] != -1:
+            summary += f"- institution citation count: {row['CitationCount']}\n"
+        summary = summary.replace("-1", "Unknown")
+
+    # if add_rel and row["type"] == "paper":
+    #     summary += self.get_rel_info(idx, n_rel=n_rel)
+
+    # if compact:
+    #     summary = compact_text(summary)
+
     return summary

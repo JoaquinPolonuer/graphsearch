@@ -12,12 +12,11 @@ from graph_types.graph import Graph, Node
 
 
 class PaperNode(Node):
-    abstract: str
 
     def to_doc(self) -> dict:
         return {
             "name": self.name,
-            "abstract": self.abstract,
+            "summary": self.summary,
             "index": self.index,
             "type": self.type,
         }
@@ -26,7 +25,7 @@ class PaperNode(Node):
     def from_doc(cls, data: dict) -> Self:
         return cls(
             name=data["name"],
-            abstract=data["abstract"],
+            summary=data["summary"],
             index=data["index"],
             type=data["type"],
         )
@@ -35,7 +34,7 @@ class PaperNode(Node):
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
             name=str(row["title"]),
-            abstract=row["abstract"],
+            summary=row["summary"],
             index=row["index"],
             type=row["type"],
         )
@@ -46,6 +45,7 @@ class AuthorNode(Node):
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
             name=str(row["DisplayName"]),
+            summary=row["summary"],
             index=row["index"],
             type=row["type"],
         )
@@ -56,6 +56,7 @@ class InstitutionNode(Node):
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
             name=str(row["DisplayName"]),
+            summary=row["summary"],
             index=row["index"],
             type=row["type"],
         )
@@ -66,6 +67,7 @@ class FieldOfStudyNode(Node):
     def from_df_row(cls, row: pd.Series) -> Self:
         return cls(
             name=str(row["DisplayName"]),
+            summary=row["summary"],
             index=row["index"],
             type=row["type"],
         )

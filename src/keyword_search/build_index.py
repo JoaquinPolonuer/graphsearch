@@ -8,10 +8,9 @@ from index import ElasticsearchIndex
 
 from graph_types.graph import Graph
 
-graph = Graph.load("prime")
+graph = Graph.load("amazon")
 index = ElasticsearchIndex(name=f"{graph.name}_index")
 index.delete_if_exists()
-
 index.create(
     mapping={
         "mappings": {
@@ -19,8 +18,7 @@ index.create(
                 "name": {"type": "text", "analyzer": "standard"},
                 "index": {"type": "text"},
                 "type": {"type": "keyword"},
-                "source": {"type": "keyword"},
-                "details": {"type": "text", "analyzer": "standard"},
+                "summary": {"type": "text", "analyzer": "standard"},
             }
         }
     },
