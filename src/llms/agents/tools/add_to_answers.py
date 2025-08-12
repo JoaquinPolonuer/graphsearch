@@ -36,11 +36,6 @@ class AddToAnswer(Tool):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "answer_node_names": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "List of node names that represent the answer. Pass EVERY node that could be an answer to this question.",
-                        },
                         "answer_node_indices": {
                             "type": "array",
                             "items": {"type": "integer"},

@@ -10,9 +10,9 @@ from src.llms.agents.tools.add_to_answers import AddToAnswer
 
 from src.prompts.prompts import (
     SUBGRAPH_EXPLORER_INITIAL_STATE,
-    SUBGRAPH_EXPLORER_SYSTEM,
     MAG_SUBGRAPH_EXPLORER_SYSTEM,
     PRIME_SUBGRAPH_EXPLORER_SYSTEM,
+    AMAZON_SUBGRAPH_EXPLORER_SYSTEM,
 )
 from fuzzywuzzy import fuzz
 
@@ -47,11 +47,15 @@ class SubgraphExplorerAgent:
         self.answer_nodes = []
 
         if "prime" in graph.name:
-            system_prompt = PRIME_SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
+            system_prompt = PRIME_SUBGRAPH_EXPLORER_SYSTEM
         elif "mag" in graph.name:
-            system_prompt = MAG_SUBGRAPH_EXPLORER_SYSTEM.format(node_types=self.graph.node_types)
+            system_prompt = MAG_SUBGRAPH_EXPLORER_SYSTEM
+        elif "amazon" in graph.name:
+            system_prompt = AMAZON_SUBGRAPH_EXPLORER_SYSTEM
         else:
-            system_prompt = SUBGRAPH_EXPLORER_SYSTEM
+            raise ValueError(
+                f"Unknown dataset type for graph: {graph.name}. Supported datasets: prime, mag, amazon"
+            )
 
         self.system_prompt = system_prompt.format(node_types=self.graph.node_types)
 

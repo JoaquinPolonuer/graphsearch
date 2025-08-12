@@ -54,10 +54,6 @@ class FindPathsTool(Tool):
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "dst_node_name": {
-                            "type": "string",
-                            "description": "The name of the destination node to find paths to",
-                        },
                         "dst_node_index": {
                             "type": "integer",
                             "description": "The index of the destination node to find paths to",
