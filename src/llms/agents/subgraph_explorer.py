@@ -14,11 +14,6 @@ from src.prompts.prompts import (
     PRIME_SUBGRAPH_EXPLORER_SYSTEM,
     AMAZON_SUBGRAPH_EXPLORER_SYSTEM,
 )
-from fuzzywuzzy import fuzz
-
-
-def fuzzy_match(name, pattern, threshold=90):
-    return fuzz.partial_ratio(name.lower(), pattern.lower()) >= threshold
 
 
 class SubgraphExplorerAgent:
