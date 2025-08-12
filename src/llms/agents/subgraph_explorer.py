@@ -119,7 +119,7 @@ class SubgraphExplorerAgent:
         elif function_name == "add_to_answer":
             return tool(agent=self, answer_node_indices=args["answer_node_indices"])
         else:
-            raise ValueError(f"Unknown tool: {function_name}")
+            return f"Unknown tool: {function_name}"
 
     def answer(self, max_steps=10) -> Generator[tuple[str, list[Node]], None, None]:
         state = SUBGRAPH_EXPLORER_INITIAL_STATE.format(

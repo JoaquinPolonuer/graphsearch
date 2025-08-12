@@ -87,7 +87,7 @@ class SearchInSurroundingsTool(Tool):
         else:
             nodes_matching_name_df = search_nodes_df[
                 (search_nodes_df["name"].apply(lambda x: fuzzy_match(x, query)))
-                | (search_nodes_df["name"].str.contains(query, case=False))
+                | (search_nodes_df["name"].str.contains(query, case=False, regex=False))
             ]
 
             candidates: list[str] = (
@@ -100,7 +100,7 @@ class SearchInSurroundingsTool(Tool):
             )
 
             nodes_matching_summary_df = search_nodes_df[
-                (search_nodes_df["summary"].str.contains(query, case=False))
+                (search_nodes_df["summary"].str.contains(query, case=False, regex=False))
                 & (~search_nodes_df["index"].isin(nodes_matching_name_df["index"]))
             ]
 
