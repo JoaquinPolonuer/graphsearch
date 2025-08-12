@@ -1,4 +1,9 @@
+import sys
+from pathlib import Path
 from typing import Any
+
+sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
+
 from src.llms.agents.tools.tools import Tool
 from graph_types.graph import Graph, Node
 from fuzzywuzzy import fuzz
@@ -145,3 +150,21 @@ class SearchInSurroundingsTool(Tool):
                 },
             },
         }
+
+
+if __name__ == "__main__":
+    from graph_types.graph import Graph
+
+    graph = Graph.load("prime")
+    tool = SearchInSurroundingsTool(graph)
+
+    node = graph.get_node_by_index(194)  # A paper node
+    print(tool(node, "cancer", "field_of_study", 1))
+    print(tool(node, "cancer", "", 1))
+    print(tool(node, "", "field_of_study", 1))
+    print(tool(node, "", "", 1))
+
+    print(tool(node, "learning", "field_of_study", 2))
+    print(tool(node, "learning", "", 2))
+    print(tool(node, "", "field_of_study", 2))
+    print(tool(node, "", "", 2))

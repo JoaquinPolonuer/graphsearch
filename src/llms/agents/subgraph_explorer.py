@@ -114,9 +114,15 @@ class SubgraphExplorerAgent:
             return tool(src_index=self.node.index, dst_index=args["dst_node_index"])
         elif function_name == "search_in_surroundings":
             return tool(
-                node=self.node, query=args.get("query", ""), type=args.get("type", ""), k=args["k"]
+                node=self.node,
+                query=args.get("query", ""),
+                type=args.get("type", ""),
+                k=args.get("k", 1),
             )
         elif function_name == "add_to_answer":
+            answer_node_indices = args.get("answer_node_indices", [])
+            if not answer_node_indices:
+                return "No answer nodes provided to add_to_answer tool."
             return tool(agent=self, answer_node_indices=args["answer_node_indices"])
         else:
             return f"Unknown tool: {function_name}"

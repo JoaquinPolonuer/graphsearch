@@ -19,7 +19,7 @@ from src.utils import (
     setup_results_dir,
 )
 
-graph_name = "prime"
+graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 

@@ -8,7 +8,7 @@ from src.llms.simple_calls import extract_entities_from_question, filter_relevan
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
 
-graph_name = "prime"
+graph_name = "mag"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
