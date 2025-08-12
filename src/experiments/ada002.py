@@ -14,8 +14,8 @@ graph, qas = load_graph_and_qas(graph_name)
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 results_dir = setup_results_dir(graph.name, "ada002")
 
-for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
-    question_embedding = query_embeddings[question_index]
+for question_id, question, answer_indices in iterate_qas(qas, limit=100):
+    question_embedding = query_embeddings[question_id]
 
     ada002_indices = semantic_sort(doc_embeddings.keys(), question_embedding, doc_embeddings)[:100]
 
@@ -26,7 +26,7 @@ for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
             "answer_indices": answer_indices,
         },
         results_dir=results_dir,
-        question_index=question_index,
+        question_id=question_id,
     )
 
-    print(f"Processed question {question_index}")
+    print(f"Processed question {question_id}")

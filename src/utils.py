@@ -9,7 +9,7 @@ from graph_types.graph import Graph
 
 
 def load_graph_and_qas(graph_name: str):
-    qas = pd.read_csv(DATA_DIR / f"qas/{graph_name}.csv")
+    qas = pd.read_csv(DATA_DIR / f"qas/stark_{graph_name}_qa.csv")
     graph = Graph.load(graph_name)
     return graph, qas
 
@@ -25,27 +25,14 @@ def load_embeddings(graph_name: str):
     return doc_embeddings, query_embeddings
 
 
-def iterate_qas(qas, limit=None, shuffle=False, subset=None):
-    if subset is not None:
-        if shuffle:
-            raise ValueError("Cannot shuffle when subset is specified.")
-        if limit is not None:
-            raise ValueError("Cannot limit when subset is specified.")
+def iterate_qas(qas, limit=None):
+    question_ids = qas["id"].tolist()
+    questions = qas["query"].tolist()
+    answer_indices_list = qas["answer_ids"].apply(json.loads).tolist()
 
-        qas = qas[qas.index.isin(subset)]
-
-    qas = qas.iloc[:limit] if limit else qas
-    question_indices = qas.index.tolist()
-    questions = qas["question"].tolist()
-    answer_indices_list = qas["answer_indices"].apply(json.loads).tolist()
-
-    if shuffle:
-        indices = torch.randperm(len(question_indices)).tolist()
-        question_indices = [question_indices[i] for i in indices]
-        questions = [questions[i] for i in indices]
-        answer_indices_list = [answer_indices_list[i] for i in indices]
-
-    return list(zip(question_indices, questions, answer_indices_list))
+    if limit:
+        return list(zip(question_ids, questions, answer_indices_list))[:limit]
+    return list(zip(question_ids, questions, answer_indices_list))
 
 
 def setup_results_dir(graph_name: str, experiment_name: str):

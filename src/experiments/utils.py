@@ -51,6 +51,6 @@ def map_entities_to_nodes(graph, entities):
     return all_nodes, all_scores
 
 
-def save_log(log, results_dir, question_index):
-    with open(results_dir / f"{question_index}.json", "w") as f:
+def save_log(log, results_dir, question_id):
+    with open(results_dir / f"{question_id}.json", "w") as f:
         json.dump(log, f, indent=4)

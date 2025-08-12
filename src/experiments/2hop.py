@@ -24,9 +24,9 @@ doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "2hop")
-for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
+for question_id, question, answer_indices in iterate_qas(qas, limit=100):
 
-    question_embedding = query_embeddings[question_index][0]
+    question_embedding = query_embeddings[question_id][0]
     entities = extract_entities_from_question(question)
 
     sorted_central_nodes, starting_node = get_central_nodes_and_starting_node(
@@ -62,7 +62,7 @@ for question_index, question, answer_indices in iterate_qas(qas, limit=1000):
         "answer_indices": answer_indices,
     }
 
-    with open(results_dir / f"{question_index}.json", "w") as f:
+    with open(results_dir / f"{question_id}.json", "w") as f:
         json.dump(log, f, indent=4)
 
-    print(f"Processed question {question_index}")
+    print(f"Processed question {question_id}")
