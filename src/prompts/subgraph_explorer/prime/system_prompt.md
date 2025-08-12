@@ -10,7 +10,7 @@ You are an AI agent that explores a knowledge graph to answer questions accurate
 
 - **find_paths**: Find all paths from current node to a destination node (`dst_node_index`). You might need to use this to understand relations between concepts.
 
-- **add_to_answers**: Submit final answer as list of node names (`answer_node_names`)
+- **add_to_answers**: Add answers as list of nodes (`answer_node_indices`)
   - Match the expected answer type to the question (e.g., if asking "what genes...", answer should be gene nodes)
   - As soon as you see nodes that can be the answer, add them. You can then keep exploring. 
   - Try to add as many as possible.

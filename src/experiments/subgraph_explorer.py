@@ -11,7 +11,7 @@ from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
 
-graph_name = "prime"
+graph_name = "amazon"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
