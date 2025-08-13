@@ -110,17 +110,17 @@ class Graph(BaseModel):
     name: str
     nodes_df: pd.DataFrame
     edges_df: pd.DataFrame
-    index: Optional["ElasticsearchIndex"] = None
+    index: Optional["TantivyIndex"] = None
 
     class Config:
         arbitrary_types_allowed = True
 
     def __init__(self, **data):
-        from src.keyword_search.index import ElasticsearchIndex
+        from src.keyword_search.index import TantivyIndex
 
         super().__init__(**data)
 
-        self.index = ElasticsearchIndex(name=f"{self.name}_index")
+        self.index = TantivyIndex(name=f"{self.name}_index")
 
     @property
     def node_types(self) -> list[str]:
@@ -250,6 +250,9 @@ class Graph(BaseModel):
         )
 
     def search_nodes(self, query: str, k=10, mode="default") -> tuple[list[Node], list[float]]:
+        if self.index is None:
+            return [], []
+            
         if mode == "default":
             response = self.index.search(query=query, k=k)
         elif mode == "summary":

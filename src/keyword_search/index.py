@@ -1,8 +1,9 @@
 import json
 import sys
 from pathlib import Path
+from typing import List, Dict, Any
 
-import requests
+import tantivy
 from pydantic import BaseModel
 
 # Add project root to path
@@ -11,152 +12,221 @@ sys.path.append(str(project_root))
 import time
 
 from graph_types.graph import Graph
+from config import DATA_DIR
 
 
-class ElasticsearchIndex(BaseModel):
+class TantivyIndex(BaseModel):
     name: str
-    base_url: str = "http://localhost:9200"
+    index_path: Path = DATA_DIR / "graphs" / "indices"
 
-    def send_batch(self, batch):
-        lines = []
-        for i in range(0, len(batch), 2):
-            action = json.dumps(batch[i])
-            doc = json.dumps(batch[i + 1])
-            lines.extend([action, doc])
-        bulk_data = "\n".join(lines) + "\n"
+    def __init__(self, **data):
+        super().__init__(**data)
+        self._index = None
+        self._schema = None
+        self._query_parser = None
 
-        response = requests.post(
-            f"{self.base_url}/_bulk",
-            data=bulk_data,
-            headers={"Content-Type": "application/x-ndjson"},
-        )
+    @property
+    def full_path(self) -> Path:
+        return self.index_path / self.name
 
-        if response.status_code not in (200, 201):
-            print(f"Error in batch indexing: {response.text}")
-        else:
-            # Check for individual document errors
-            result = response.json()
-            if result.get("errors"):
-                for item in result.get("items", []):
-                    if "index" in item and item["index"].get("error"):
-                        print(
-                            f"Error indexing document {item['index']['_id']}: {item['index']['error']}"
-                        )
+    def _create_schema(self):
+        schema_builder = tantivy.SchemaBuilder()
+        schema_builder.add_text_field("name", stored=True)
+        schema_builder.add_integer_field("index", stored=True)
+        schema_builder.add_text_field("type", stored=True)
+        schema_builder.add_text_field("summary", stored=True)
+        return schema_builder.build()
 
     def delete_if_exists(self):
-        print(f"Checking if index {self.name} exists...")
-        response = requests.head(f"{self.base_url}/{self.name}")
-        if response.status_code == 200:
+        if self.full_path.exists():
             print(f"Index {self.name} exists. Deleting...")
-            delete_response = requests.delete(f"{self.base_url}/{self.name}")
-            if delete_response.status_code == 200:
-                print(f"Index {self.name} deleted successfully")
-            else:
-                print(f"Error deleting index: {delete_response.text}")
-                return False
+            import shutil
+            shutil.rmtree(self.full_path)
+            print(f"Index {self.name} deleted successfully")
         else:
             print(f"Index {self.name} does not exist")
-
         return True
 
-    def create(self, mapping):
-        print(f"Creating index {self.name} with mapping...")
-
-        response = requests.put(
-            f"{self.base_url}/{self.name}",
-            json=mapping,
-            headers={"Content-Type": "application/json"},
-        )
-
-        if response.status_code in (200, 201):
-            print(f"Index {self.name} created successfully")
-            return True
-        else:
-            print(f"Error creating index: {response.text}")
-            return False
+    def create(self, mapping=None):
+        print(f"Creating index {self.name}...")
+        
+        # Create directory if it doesn't exist
+        self.full_path.mkdir(parents=True, exist_ok=True)
+        
+        # Create schema
+        self._schema = self._create_schema()
+        
+        # Create index
+        self._index = tantivy.Index(self._schema, path=str(self.full_path))
+        
+        print(f"Index {self.name} created successfully")
+        return True
 
     def upload_graph(self, graph: Graph, batch_size: int = 1000):
-        batch = []
+        if not self._index:
+            self._load_index()
+        
         total_docs = 0
+        writer = self._index.writer()
+        
         for idx in range(len(graph.nodes_df)):
-            doc = graph.get_node_by_index(idx).to_doc()
-
-            batch.append({"index": {"_index": self.name, "_id": doc["index"]}})
-            batch.append(doc)
-
-            if len(batch) >= batch_size * 2:  # *2 because each doc needs 2 lines
-                self.send_batch(batch)
-                total_docs += batch_size
+            node = graph.get_node_by_index(idx)
+            doc_data = node.to_doc()
+            
+            # Create Tantivy document
+            doc = tantivy.Document()
+            doc.add_text("name", doc_data["name"])
+            doc.add_integer("index", doc_data["index"])
+            doc.add_text("type", doc_data["type"])
+            doc.add_text("summary", doc_data["summary"])
+            
+            writer.add_document(doc)
+            total_docs += 1
+            
+            if total_docs % batch_size == 0:
                 print(f"Indexed {total_docs} documents...", flush=True)
-                batch = []
-
-        # Send remaining documents
-        if batch:
-            self.send_batch(batch)
-            total_docs += len(batch) // 2
-            print(f"Indexed {total_docs} documents...", flush=True)
-
+        
+        # Commit all documents
+        writer.commit()
         print("Import completed!", flush=True)
+        print(f"Total documents in {self.name}: {total_docs}", flush=True)
 
-        time.sleep(1)
-        stats = self.stats()
-        doc_count = stats["indices"][self.name]["total"]["docs"]["count"]
-        print(f"Total documents in {self.name}: {doc_count}", flush=True)
-
-    def stats(self):
-        response = requests.get(f"{self.base_url}/{self.name}/_stats")
-        stats = response.json()
-        return stats
+    def _load_index(self):
+        if not self._index and self.full_path.exists():
+            self._schema = self._create_schema()
+            self._index = tantivy.Index.open(str(self.full_path))
 
     def search(self, query: str, k: int = 10) -> dict:
-        search_body = {
-            "size": k,
-            "query": {
-                "bool": {
-                    "should": [
-                        {"match": {"name": {"query": query, "boost": 3}}},
-                        {"match_phrase": {"name": {"query": query, "boost": 2}}},
-                        {"match": {"name": {"query": query, "fuzziness": "AUTO", "boost": 1}}},
-                    ],
-                    "minimum_should_match": 1,
-                }
-            },
+        if not self._index:
+            self._load_index()
+        
+        if not self._index:
+            return {"hits": {"hits": [], "total": {"value": 0}}}
+        
+        # Parse query - use the index's parse_query method
+        parsed_query = self._index.parse_query(query, ["name", "summary"])
+        
+        # Search
+        searcher = self._index.searcher()
+        search_result = searcher.search(parsed_query, k)
+        
+        # Convert results to Elasticsearch-compatible format
+        hits = []
+        for score, doc_address in search_result.hits:
+            doc = searcher.doc(doc_address)
+            source = {
+                "name": doc.get_first("name"),
+                "index": doc.get_first("index"),
+                "type": doc.get_first("type"),
+                "summary": doc.get_first("summary") or "",
+            }
+            hits.append({
+                "_source": source,
+                "_score": score
+            })
+        
+        return {
+            "hits": {
+                "hits": hits,
+                "total": {"value": len(hits)}
+            }
         }
 
-        response = requests.post(
-            f"{self.base_url}/{self.name}/_search",
-            json=search_body,
-            headers={"Content-Type": "application/json"},
-            timeout=10,
-        )
-        return response.json()
-
     def search_summary(self, query: str, k: int = 10) -> dict:
-        search_body = {"size": k, "query": {"match": {"summary": {"query": query}}}}
-
-        response = requests.post(
-            f"{self.base_url}/{self.name}/_search",
-            json=search_body,
-            headers={"Content-Type": "application/json"},
-            timeout=10,
-        )
-        return response.json()
-
+        if not self._index:
+            self._load_index()
+        
+        if not self._index:
+            return {"hits": {"hits": [], "total": {"value": 0}}}
+        
+        # Parse query - search only in summary field
+        parsed_query = self._index.parse_query(query, ["summary"])
+        
+        # Search
+        searcher = self._index.searcher()
+        search_result = searcher.search(parsed_query, k)
+        
+        # Convert results to Elasticsearch-compatible format
+        hits = []
+        for score, doc_address in search_result.hits:
+            doc = searcher.doc(doc_address)
+            source = {
+                "name": doc.get_first("name"),
+                "index": doc.get_first("index"),
+                "type": doc.get_first("type"),
+                "summary": doc.get_first("summary") or "",
+            }
+            hits.append({
+                "_source": source,
+                "_score": score
+            })
+        
+        return {
+            "hits": {
+                "hits": hits,
+                "total": {"value": len(hits)}
+            }
+        }
 
 if __name__ == "__main__":
-    # Example usage
-    index = ElasticsearchIndex(name="prime_index")
-    results = index.search("epithelial skin neoplasms", k=5)
-
-    if results:
-        print(f"Found {results['hits']['total']['value']} results:")
-        print("-" * 50)
-
-        for hit in results["hits"]["hits"]:
-            source = hit["_source"]
-            score = hit["_score"]
-            print(f"Score: {score}")
-            print(f"Name: {source.get('name', 'N/A')}")
-            print(f"Type: {source.get('type', 'N/A')}")
-            print(f"Details: {source.get('details', 'N/A')[:100]}...")
-            print("-" * 50)
+    # Get all existing indices
+    indices_dir = DATA_DIR / "graphs" / "indices"
+    
+    if not indices_dir.exists():
+        print("No indices directory found")
+        exit()
+    
+    index_dirs = [d for d in indices_dir.iterdir() if d.is_dir()]
+    
+    if not index_dirs:
+        print("No indices found")
+        exit()
+    
+    print("=== INDEX SUMMARY ===")
+    indices_info = []
+    
+    for index_dir in index_dirs:
+        index_name = index_dir.name
+        try:
+            index = TantivyIndex(name=index_name)
+            index._load_index()
+            
+            if index._index:
+                # Get document count
+                searcher = index._index.searcher()
+                doc_count = searcher.num_docs
+                indices_info.append((index_name, doc_count, index))
+                print(f"{index_name}: {doc_count} documents")
+            else:
+                print(f"{index_name}: Failed to load")
+        except Exception as e:
+            print(f"{index_name}: Error - {e}")
+    
+    print(f"\nTotal indices: {len(indices_info)}")
+    
+    # Sample search on each index
+    print("\n=== SAMPLE SEARCHES ===")
+    search_query = "epithelial skin neoplasms"
+    
+    for index_name, doc_count, index in indices_info:
+        print(f"\n--- {index_name} ({doc_count} docs) ---")
+        
+        try:
+            results = index.search(search_query, k=1)
+            
+            if results['hits']['hits']:
+                hit = results['hits']['hits'][0]
+                source = hit['_source']
+                score = hit['_score']
+                
+                print(f"Score: {score:.3f}")
+                print(f"Name: {source.get('name', 'N/A')}")
+                print(f"Type: {source.get('type', 'N/A')}")
+                summary = source.get('summary', 'N/A')
+                print(f"Summary: {summary[:100]}{'...' if len(summary) > 100 else ''}")
+            else:
+                print("No results found")
+        except Exception as e:
+            print(f"Search error: {e}")
+    
+    print("\n=== DONE ===")

@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from index import ElasticsearchIndex
+from index import TantivyIndex
 
 from graph_types.graph import Graph
 import argparse
@@ -15,19 +15,8 @@ args = parser.parse_args()
 graph_name = args.graph_name
 
 graph = Graph.load(graph_name)
-index = ElasticsearchIndex(name=f"{graph.name}_index")
+index = TantivyIndex(name=f"{graph.name}_index")
 index.delete_if_exists()
-index.create(
-    mapping={
-        "mappings": {
-            "properties": {
-                "name": {"type": "text", "analyzer": "standard"},
-                "index": {"type": "text"},
-                "type": {"type": "keyword"},
-                "summary": {"type": "text", "analyzer": "standard"},
-            }
-        }
-    },
-)
+index.create()
 
 index.upload_graph(graph)
