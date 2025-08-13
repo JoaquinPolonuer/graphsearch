@@ -8,7 +8,7 @@ from src.llms.simple_calls import extract_entities_from_question, filter_relevan
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
 
-graph_name = "amazon"
+graph_name = "prime"
 doc_embeddings, query_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
@@ -31,9 +31,9 @@ for question_id, question, answer_indices in iterate_qas(qas, limit=100):
         agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "product")
 
     # NOTE: This is broken because the question_id is not the index anymore!!
-    # agent_answer_indices = semantic_sort(
-    #     agent_answer_indices, query_embeddings[question_id], doc_embeddings
-    # )
+    agent_answer_indices = semantic_sort(
+        agent_answer_indices, query_embeddings[question_id], doc_embeddings
+    )
 
     save_log(
         {

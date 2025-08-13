@@ -104,23 +104,54 @@ class SearchInSurroundingsTool(Tool):
                 else []
             )
 
+            query_words = [word for word in query.split() if len(word) > 3]
             nodes_matching_summary_df = search_nodes_df[
-                (search_nodes_df["summary"].str.contains(query, case=False, regex=False))
-                & (~search_nodes_df["index"].isin(nodes_matching_name_df["index"]))
+                (~search_nodes_df["index"].isin(nodes_matching_name_df["index"]))
             ]
+            if len(nodes_matching_summary_df) > 50_000:
+                print()
+            nodes_matching_summary_df["appearing_words"] = nodes_matching_summary_df[
+                "summary"
+            ].apply(
+                lambda summary: [word for word in query_words if word.lower() in summary.lower()]
+            )
+            nodes_matching_summary_df["relevance"] = nodes_matching_summary_df[
+                "appearing_words"
+            ].apply(len)
+            nodes_matching_summary_df = nodes_matching_summary_df[
+                nodes_matching_summary_df["relevance"] > 0
+            ].sort_values(by="relevance", ascending=False)
 
-            for i, row in nodes_matching_summary_df.iterrows():
+            for _, row in nodes_matching_summary_df.iterrows():
                 idx = row["index"]
                 summary = row["summary"]
+                appearing_words = row["appearing_words"]
 
                 candidate = self.graph.get_node_by_index(idx)
 
-                index_in_summary = summary.lower().find(query.lower())
-                match_in_summary = summary[
-                    max(0, index_in_summary - 50) : min(len(summary), index_in_summary + 50)
-                ]
+                # Find context around matched words
+                matched_contexts = []
+                for word in appearing_words:
+                    word_index = summary.lower().find(word.lower())
+                    if word_index != -1:
+                        context_start = max(0, word_index - 30)
+                        context_end = min(len(summary), word_index + len(word) + 30)
+                        context = summary[context_start:context_end]
+                        # Highlight the matched word
+                        highlighted_context = context.replace(
+                            summary[word_index : word_index + len(word)],
+                            f"**{summary[word_index:word_index + len(word)]}**",
+                        )
+                        matched_contexts.append(highlighted_context)
 
-                candidates.append(f"{str(candidate)}: ...{match_in_summary}...")
+                # Join contexts or use the first one if multiple
+                if matched_contexts:
+                    context_display = (
+                        f"{len(matched_contexts)} matches: {', '.join(matched_contexts[:2])}"
+                    )
+                    candidates.append(f"{str(candidate)}: {context_display}")
+                else:
+                    candidates.append(str(candidate))
 
             return self._format_response(node, query, type, k, candidates)
 
@@ -158,13 +189,5 @@ if __name__ == "__main__":
     graph = Graph.load("prime")
     tool = SearchInSurroundingsTool(graph)
 
-    node = graph.get_node_by_index(194)  # A paper node
-    print(tool(node, "cancer", "field_of_study", 1))
-    print(tool(node, "cancer", "", 1))
-    print(tool(node, "", "field_of_study", 1))
-    print(tool(node, "", "", 1))
-
-    print(tool(node, "learning", "field_of_study", 2))
-    print(tool(node, "learning", "", 2))
-    print(tool(node, "", "field_of_study", 2))
-    print(tool(node, "", "", 2))
+    node = graph.get_node_by_index(7626)  # A paper node
+    print(tool(node, "Acute Intermittent Porphyria tablet", "drug", 2))
