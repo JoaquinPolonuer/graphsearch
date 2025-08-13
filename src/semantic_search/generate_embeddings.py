@@ -13,8 +13,13 @@ from src.utils import (
     truncate_to_token_limit,
 )
 from openai import AzureOpenAI
+import argparse
 
-graph_name = "mag"
+parser = argparse.ArgumentParser(description="Generate embeddings for a graph.")
+parser.add_argument("--graph_name", type=str, required=True, help="Name of the graph to process")
+args = parser.parse_args()
+
+graph_name = args.graph_name
 graph, qas = load_graph_and_qas(graph_name)
 
 AZURE_ENDPOINT = os.environ["AZURE_API_BASE"]
@@ -50,24 +55,28 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
         if token_count > 8192:
             batch[j] = truncate_to_token_limit(summary, 8192, EMBEDDINGS_MODEL)
             print(
-                f"Truncated summary at index {i+j} from {token_count} to {count_tokens(batch[j])} tokens."
+                f"Truncated summary at index {i+j} from {token_count} to {count_tokens(batch[j])} tokens.", 
+                flush=True
             )
     try:
         response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
     except Exception as e:
         raise RuntimeError(f"Error generating embeddings for batch starting at index {i}: {e}")
-    
+
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     node_embeddings = torch.cat((node_embeddings, batch_embeddings), dim=0)
 
-    print(f"Processed {i + len(batch)} / {len(graph.nodes_df['summary'].tolist())} summaries")
+    print(
+        f"Processed {i + len(batch)} / {len(graph.nodes_df['summary'].tolist())} {graph_name} summaries", 
+        flush=True
+    )
 
     if (i + len(batch)) % 1000 == 0:
         torch.save(
             node_embeddings,
             f"{EMBEDDINGS_DIR}/node_embeddings.pt",
         )
-        print(f"Saved intermediate node embeddings at {i + len(batch)} nodes.")
+        print(f"Saved intermediate node embeddings at {i + len(batch)} nodes.", flush=True)
 
 torch.save(
     node_embeddings,
@@ -96,7 +105,7 @@ for i in range(0, len(questions), 100):
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     question_embeddings = torch.cat((question_embeddings, batch_embeddings), dim=0)
 
-    print(f"Processed {i + len(batch)} / {len(questions)} questions")
+    print(f"Processed {i + len(batch)} / {len(questions)} {graph_name} questions", flush=True)
 
 torch.save(
     question_embeddings,
