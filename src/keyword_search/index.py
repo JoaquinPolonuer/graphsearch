@@ -87,21 +87,21 @@ class ElasticsearchIndex(BaseModel):
             if len(batch) >= batch_size * 2:  # *2 because each doc needs 2 lines
                 self.send_batch(batch)
                 total_docs += batch_size
-                print(f"Indexed {total_docs} documents...")
+                print(f"Indexed {total_docs} documents...", flush=True)
                 batch = []
 
         # Send remaining documents
         if batch:
             self.send_batch(batch)
             total_docs += len(batch) // 2
-            print(f"Indexed {total_docs} documents...")
+            print(f"Indexed {total_docs} documents...", flush=True)
 
-        print("Import completed!")
+        print("Import completed!", flush=True)
 
         time.sleep(1)
         stats = self.stats()
         doc_count = stats["indices"][self.name]["total"]["docs"]["count"]
-        print(f"Total documents in {self.name}: {doc_count}")
+        print(f"Total documents in {self.name}: {doc_count}", flush=True)
 
     def stats(self):
         response = requests.get(f"{self.base_url}/{self.name}/_stats")
@@ -141,6 +141,7 @@ class ElasticsearchIndex(BaseModel):
             timeout=10,
         )
         return response.json()
+
 
 if __name__ == "__main__":
     # Example usage
