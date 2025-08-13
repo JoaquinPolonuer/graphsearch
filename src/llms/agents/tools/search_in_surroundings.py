@@ -16,12 +16,15 @@ def fuzzy_match(name, pattern, threshold=90):
 
 
 class SearchInSurroundingsTool(Tool):
+    MAX_RESULTS_SHOWN: int = 15
+
     def __init__(self, graph):
         super().__init__(
             name="search_in_surroundings",
             description="Search in surroundings (1 or 2 hop) for a specific keyword, in nodes with a specific type",
             graph=graph,
         )
+        self.MAX_RESULTS_SHOWN = 20
 
     def _format_response(self, node, query, type, k, candidates: list[str]) -> str:
         if not candidates:
@@ -31,11 +34,13 @@ class SearchInSurroundingsTool(Tool):
         # If asking for the whole hop
         if not query and not type:
             response += (
-                f"search_in_surroundings(k={k}) found:\n\n" + "\n\n".join(candidates[:15]) + "\n\n"
+                f"search_in_surroundings(k={k}) found:\n\n"
+                + "\n\n".join(candidates[: self.MAX_RESULTS_SHOWN])
+                + "\n\n"
             )
             response += (
-                f"(Showing 15 of {len(candidates)} results. You may want to refine your search)"
-                if len(candidates) > 15
+                f"(Showing {self.MAX_RESULTS_SHOWN} of {len(candidates)} results. You may want to refine your search)"
+                if len(candidates) > self.MAX_RESULTS_SHOWN
                 else "" + "\n\n"
             )
 
@@ -43,12 +48,12 @@ class SearchInSurroundingsTool(Tool):
         if type and not query:
             response += (
                 f"search_in_surroundings(type={type}, k={k}) found:\n\n"
-                + "\n\n".join(candidates[:15])
+                + "\n\n".join(candidates[: self.MAX_RESULTS_SHOWN])
                 + "\n\n"
             )
             response += (
-                f"(Showing 15 of {len(candidates)} results. You may want to refine your search)"
-                if len(candidates) > 15
+                f"(Showing {self.MAX_RESULTS_SHOWN} of {len(candidates)} results. You may want to refine your search)"
+                if len(candidates) > self.MAX_RESULTS_SHOWN
                 else "" + "\n\n"
             )
 
@@ -60,10 +65,10 @@ class SearchInSurroundingsTool(Tool):
             else:
                 response += f"search_in_surroundings(query={query}, k={k}) found:\n\n"
 
-            response += "\n\n".join(candidates[:15]) + "\n\n"
+            response += "\n\n".join(candidates[: self.MAX_RESULTS_SHOWN]) + "\n\n"
             response += (
-                f"(Showing 15 of {len(candidates)} results. You may want to refine your search)\n"
-                if len(candidates) > 15
+                f"(Showing {self.MAX_RESULTS_SHOWN} of {len(candidates)} results. You may want to refine your search)\n"
+                if len(candidates) > self.MAX_RESULTS_SHOWN
                 else "" + "\n\n"
             )
 
@@ -189,5 +194,5 @@ if __name__ == "__main__":
     graph = Graph.load("prime")
     tool = SearchInSurroundingsTool(graph)
 
-    node = graph.get_node_by_index(7626)  # A paper node
-    print(tool(node, "Acute Intermittent Porphyria tablet", "drug", 2))
+    node = graph.get_node_by_index(14323)  # A paper node
+    print(tool(node, "herpesvirus", "", 2))
