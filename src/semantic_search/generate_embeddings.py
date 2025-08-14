@@ -37,6 +37,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 if OPENAI_API_KEY:
     fallback_client = OpenAI(api_key=OPENAI_API_KEY)
+    fallbacks = 0
 else:
     fallback_client = None 
 
@@ -70,6 +71,12 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
     except Exception as e:
         if fallback_client:
             logger.warning(f"Azure client failed for batch {i}, trying fallback OpenAI client: {e}")
+            
+            if fallbacks < 10:
+                fallbacks += 1
+            else:
+                raise RuntimeError(f"Fallback client failed after {fallbacks} attempts for batch starting at index {i}.")
+            
             try:
                 response = fallback_client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
             except Exception as fallback_e:
