@@ -14,6 +14,7 @@ from src.prompts.prompts import (
     PRIME_SUBGRAPH_EXPLORER_SYSTEM,
     AMAZON_SUBGRAPH_EXPLORER_SYSTEM,
 )
+from logger_config import logger
 
 
 class SubgraphExplorerAgent:
@@ -68,7 +69,7 @@ class SubgraphExplorerAgent:
                 tool_choice="required",
             )
         except Exception as e:
-            print(f"Error during completion: {e}")
+            logger.error(f"Error during completion: {e}")
             raise e
         assistant_message = {"role": "assistant"}
 
@@ -133,7 +134,7 @@ class SubgraphExplorerAgent:
             node=self.node.name,
         )
 
-        print(state)
+        logger.info(f"Initial state: {state}")
         self.message_history.append({"role": "user", "content": state})
 
         for i in range(max_steps):
@@ -142,11 +143,7 @@ class SubgraphExplorerAgent:
             for selected_tool in selected_tools:
                 tool_response = self.call_tool(selected_tool)
                 self.submit_tool_response(tool_response, selected_tool.id)
-                print(
-                    tool_response,
-                    "\n",
-                    "================================================",
-                )
+                logger.info(f"Tool response: {tool_response}\n{'='*48}")
 
                 yield selected_tool, self.answer_nodes
         return

@@ -7,6 +7,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
 from src.llms.agents.tools.tools import Tool
 from graph_types.graph import Graph, Node
 from fuzzywuzzy import fuzz
+from logger_config import logger
 
 
 def fuzzy_match(name, pattern, threshold=90):
@@ -114,7 +115,7 @@ class SearchInSurroundingsTool(Tool):
                 (~search_nodes_df["index"].isin(nodes_matching_name_df["index"]))
             ]
             if len(nodes_matching_summary_df) > 50_000:
-                print()
+                logger.warning(f"Large result set detected ({len(nodes_matching_summary_df)} nodes), this may affect performance")
             nodes_matching_summary_df["appearing_words"] = nodes_matching_summary_df[
                 "summary"
             ].apply(
@@ -195,4 +196,4 @@ if __name__ == "__main__":
     tool = SearchInSurroundingsTool(graph)
 
     node = graph.get_node_by_index(14323)  # A paper node
-    print(tool(node, "herpesvirus", "", 2))
+    logger.info(tool(node, "herpesvirus", "", 2))

@@ -7,8 +7,9 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 import torch
 from src.llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
-from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
+from src.experiments.utils import map_entities_to_nodes, save_log, send_explorers
 import argparse
+from logger_config import logger
 
 parser = argparse.ArgumentParser(description="Generate embeddings for a graph.")
 parser.add_argument("--graph_name", type=str, required=True, help="Name of the graph to process")
@@ -21,7 +22,7 @@ graph, qas = load_graph_and_qas(graph_name)
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
 for question_id, question, answer_indices in iterate_qas(qas, limit=100):
     if os.path.exists(results_dir / f"{question_id}.json"):
-        print(f"Skipping {question_id} as it was already processed.")
+        logger.info(f"Skipping {question_id} as it was already processed.")
         continue
 
     entities = extract_entities_from_question(question)

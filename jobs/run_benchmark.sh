@@ -15,4 +15,4 @@ export PROJECT_DIR="/n/data1/hms/dbmi/zitnik/lab/users/jop1090/graphsearch"
 cd "${PROJECT_DIR}"
 source "${PROJECT_DIR}/.venv/bin/activate"
 
-python src/keyword_search/build_index.py --graph_name prime
+python src/experiments/subgraph_explorer.py --graph_name prime

@@ -14,6 +14,7 @@ from src.utils import (
 )
 from openai import AzureOpenAI, OpenAI
 import argparse
+from logger_config import logger
 
 parser = argparse.ArgumentParser(description="Generate embeddings for a graph.")
 parser.add_argument("--graph_name", type=str, required=True, help="Name of the graph to process")
@@ -61,15 +62,14 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
         token_count = count_tokens(summary, EMBEDDINGS_MODEL)
         if token_count > 8192:
             batch[j] = truncate_to_token_limit(summary, 8192, EMBEDDINGS_MODEL)
-            print(
-                f"Truncated summary at index {i+j} from {token_count} to {count_tokens(batch[j])} tokens.", 
-                flush=True
+            logger.info(
+                f"Truncated summary at index {i+j} from {token_count} to {count_tokens(batch[j])} tokens."
             )
     try:
         response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
     except Exception as e:
         if fallback_client:
-            print(f"Azure client failed for batch {i}, trying fallback OpenAI client: {e}")
+            logger.warning(f"Azure client failed for batch {i}, trying fallback OpenAI client: {e}")
             try:
                 response = fallback_client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
             except Exception as fallback_e:
@@ -80,9 +80,8 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     node_embeddings = torch.cat((node_embeddings, batch_embeddings), dim=0)
 
-    print(
-        f"Processed {i + len(batch)} / {len(graph.nodes_df['summary'].tolist())} {graph_name} summaries", 
-        flush=True
+    logger.info(
+        f"Processed {i + len(batch)} / {len(graph.nodes_df['summary'].tolist())} {graph_name} summaries"
     )
 
     if (i + len(batch)) % 1000 == 0:
@@ -90,7 +89,7 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
             node_embeddings,
             f"{EMBEDDINGS_DIR}/node_embeddings.pt",
         )
-        print(f"Saved intermediate node embeddings at {i + len(batch)} nodes.", flush=True)
+        logger.info(f"Saved intermediate node embeddings at {i + len(batch)} nodes.")
 
 torch.save(
     node_embeddings,
@@ -118,7 +117,7 @@ for i in range(0, len(questions), 100):
         response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
     except Exception as e:
         if fallback_client:
-            print(f"Azure client failed for question batch {i}, trying fallback OpenAI client: {e}")
+            logger.warning(f"Azure client failed for question batch {i}, trying fallback OpenAI client: {e}")
             try:
                 response = fallback_client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
             except Exception as fallback_e:
@@ -129,7 +128,7 @@ for i in range(0, len(questions), 100):
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     question_embeddings = torch.cat((question_embeddings, batch_embeddings), dim=0)
 
-    print(f"Processed {i + len(batch)} / {len(questions)} {graph_name} questions", flush=True)
+    logger.info(f"Processed {i + len(batch)} / {len(questions)} {graph_name} questions")
 
 torch.save(
     question_embeddings,

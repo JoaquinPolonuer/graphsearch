@@ -11,6 +11,7 @@ from src.prompts.prompts import (
     QUESTION_ANSWER_TYPE_SYSTEM,
     STARTING_NODE_FILTERING_SYSTEM,
 )
+from logger_config import logger
 
 if not os.path.exists("data/cache/llm_calls_cache.pkl"):
     LLM_CALLS_CACHE = {}
@@ -31,7 +32,7 @@ def simple_completion(system_prompt: str, user_prompt: str, use_cache=True) -> s
     cache_key = f"{system_prompt.strip()}_{user_prompt.strip()}"
 
     if use_cache and LLM_CALLS_CACHE.get(cache_key):
-        print("Using cached llm response")
+        logger.info("Using cached llm response")
         return LLM_CALLS_CACHE[cache_key]
 
     response = (
@@ -48,7 +49,7 @@ def simple_completion(system_prompt: str, user_prompt: str, use_cache=True) -> s
     try:
         response = response.strip()
     except Exception as e:
-        print(f"Error processing response: {e}")
+        logger.error(f"Error processing response: {e}")
         response = "[]"
         pass
 
@@ -70,7 +71,7 @@ def parse_response(response: str) -> list[str]:
             try:
                 entities = response.replace("[", "").replace("]", "").split(", ")
             except Exception:
-                print(f"Failed to parse entities from response: {response}")
+                logger.warning(f"Failed to parse entities from response: {response}")
                 entities = []
 
     return entities
@@ -81,6 +82,7 @@ def extract_entities_from_question(question: str) -> list[str]:
 
     response = simple_completion(system_prompt=ENTITY_EXTRACTION_SYSTEM, user_prompt=user_prompt)
     entities = parse_response(response)
+    logger.info(f"Extracted entities: {entities}")
     return entities
 
 

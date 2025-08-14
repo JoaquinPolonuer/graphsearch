@@ -3,6 +3,7 @@ from typing import Optional, Self
 import pandas as pd
 from fuzzywuzzy import fuzz
 from pydantic import BaseModel, field_validator
+from logger_config import logger
 
 
 def fuzzy_match(name, pattern, threshold=90):
@@ -198,7 +199,7 @@ class Graph(BaseModel):
         neighbor_indices = self.get_neighbors_idx(node.index)
 
         if len(neighbor_indices) > 50000:
-            print(f"Lots of neighbors: {len(neighbor_indices)}. Returning empty set.")
+            logger.warning(f"Lots of neighbors: {len(neighbor_indices)}. Returning empty set.")
             return set()
 
         return {self.get_node_by_index(idx) for idx in neighbor_indices}

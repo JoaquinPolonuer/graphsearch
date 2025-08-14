@@ -10,6 +10,7 @@ from src.llms.simple_calls import (
     answer_based_on_nodes,
 )
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
+from logger_config import logger
 
 
 graph = Graph.load("prime")
@@ -47,6 +48,6 @@ answer = answer_based_on_nodes(
     nodes=list(agent_answer_nodes),
 )
 
-print(f"Question: {question}")
-print(f"Agent answer nodes: {[node.name for node in agent_answer_nodes]}")
-print(f"Agent answer: {answer}")
+logger.info(f"Question: {question}")
+logger.info(f"Agent answer nodes: {[node.name for node in agent_answer_nodes]}")
+logger.info(f"Agent answer: {answer}")
