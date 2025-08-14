@@ -32,7 +32,7 @@ def simple_completion(system_prompt: str, user_prompt: str, use_cache=True) -> s
     cache_key = f"{system_prompt.strip()}_{user_prompt.strip()}"
 
     if use_cache and LLM_CALLS_CACHE.get(cache_key):
-        logger.info("Using cached llm response")
+        logger.debug("Using cached llm response")
         return LLM_CALLS_CACHE[cache_key]
 
     response = (
@@ -82,7 +82,7 @@ def extract_entities_from_question(question: str) -> list[str]:
 
     response = simple_completion(system_prompt=ENTITY_EXTRACTION_SYSTEM, user_prompt=user_prompt)
     entities = parse_response(response)
-    logger.info(f"Extracted entities: {entities}")
+    logger.debug(f"Extracted entities: {entities}")
     return entities
 
 
