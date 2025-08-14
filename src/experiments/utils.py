@@ -10,16 +10,6 @@ from graph_types.graph import Node
 from src.llms.agents.subgraph_explorer import SubgraphExplorerAgent
 
 
-def semantic_sort(indices, query_embedding, doc_embeddings):
-    return sorted(
-        indices,
-        key=lambda x: torch.matmul(
-            query_embedding.detach().clone(),
-            doc_embeddings[x].detach().clone().T,
-        ).item(),
-        reverse=True,
-    )
-
 
 def send_explorers(graph, question, starting_nodes):
     message_histories = []

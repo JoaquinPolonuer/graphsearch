@@ -4,12 +4,18 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+import torch
 from src.llms.simple_calls import extract_entities_from_question, filter_relevant_nodes
 from src.utils import iterate_qas, load_embeddings, load_graph_and_qas, setup_results_dir
 from src.experiments.utils import semantic_sort, map_entities_to_nodes, save_log, send_explorers
+import argparse
 
-graph_name = "prime"
-doc_embeddings, query_embeddings = load_embeddings(graph_name)
+parser = argparse.ArgumentParser(description="Generate embeddings for a graph.")
+parser.add_argument("--graph_name", type=str, required=True, help="Name of the graph to process")
+args = parser.parse_args()
+
+graph_name = args.graph_name
+node_embeddings, question_embeddings = load_embeddings(graph_name)
 graph, qas = load_graph_and_qas(graph_name)
 
 results_dir = setup_results_dir(graph.name, "subgraph_explorer")
@@ -25,15 +31,19 @@ for question_id, question, answer_indices in iterate_qas(qas, limit=100):
 
     message_histories, agent_answer_indices = send_explorers(graph, question, starting_nodes)
 
-    if graph.name == "mag":
-        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
-    if graph.name == "amazon":
-        agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "product")
+    # NOTE: I'm commenting this out to be fair with prime. In the final version we might also want 
+    # to filter by type for prime.
+    
+    # if graph.name == "mag":
+    #     agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "paper")
+    # if graph.name == "amazon":
+    #     agent_answer_indices = graph.filter_indices_by_type(agent_answer_indices, "product")
 
-    # NOTE: This is broken because the question_id is not the index anymore!!
-    agent_answer_indices = semantic_sort(
-        agent_answer_indices, query_embeddings[question_id], doc_embeddings
-    )
+    # I'm not sure if we should do this. We should double check.
+    similarities = question_embeddings[question_id] @ node_embeddings[agent_answer_indices].T
+    agent_answer_indices = [
+        x for _, x in sorted(zip(similarities.tolist(), agent_answer_indices), reverse=True)
+    ]
 
     save_log(
         {

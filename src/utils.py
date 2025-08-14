@@ -16,14 +16,13 @@ def load_graph_and_qas(graph_name: str):
 
 
 def load_embeddings(graph_name: str):
-    doc_embeddings = torch.load(
-        DATA_DIR
-        / f"graphs/embeddings/{graph_name}/text-embedding-ada-002/doc/candidate_emb_dict.pt"
+    node_embeddings = torch.load(
+        DATA_DIR / f"graphs/embeddings/text-embedding-3-small/{graph_name}/node_embeddings.pt"
     )
-    query_embeddings = torch.load(
-        DATA_DIR / f"graphs/embeddings/{graph_name}/text-embedding-ada-002/query/query_emb_dict.pt"
+    question_embeddings = torch.load(
+        DATA_DIR / f"graphs/embeddings/text-embedding-3-small/{graph_name}/question_embeddings.pt"
     )
-    return doc_embeddings, query_embeddings
+    return node_embeddings, question_embeddings
 
 
 def iterate_qas(qas, limit=None):
@@ -49,20 +48,22 @@ def count_tokens(text: str, model: str = "text-embedding-3-small") -> int:
     except KeyError:
         # Fallback to cl100k_base for unknown models
         encoding = tiktoken.get_encoding("cl100k_base")
-    
+
     return len(encoding.encode(text))
 
 
-def truncate_to_token_limit(text: str, max_tokens: int = 8192, model: str = "text-embedding-3-small") -> str:
+def truncate_to_token_limit(
+    text: str, max_tokens: int = 8192, model: str = "text-embedding-3-small"
+) -> str:
     """Truncate text to fit within token limit."""
     try:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
-    
+
     tokens = encoding.encode(text)
     if len(tokens) <= max_tokens:
         return text
-    
+
     truncated_tokens = tokens[:max_tokens]
     return encoding.decode(truncated_tokens)

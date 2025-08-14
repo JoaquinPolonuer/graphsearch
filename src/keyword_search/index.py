@@ -91,6 +91,33 @@ class TantivyIndex(BaseModel):
         print("Import completed!", flush=True)
         print(f"Total documents in {self.name}: {total_docs}", flush=True)
 
+    def _clean_query(self, query: str) -> str:
+        """Clean query string for better search results."""
+        import re
+        
+        # Remove newlines and replace with spaces
+        query = query.replace('\n', ' ')
+        
+        # Remove leading/trailing dashes and spaces
+        query = re.sub(r'^[-\s]+', '', query)
+        query = re.sub(r'[-\s]+$', '', query)
+        
+        # Remove bullet point markers (-, •, *, etc.) at start of segments
+        query = re.sub(r'(?:^|\s)[-•*]\s*', ' ', query)
+        
+        # Remove special characters that can interfere with search
+        query = query.replace(':', '')
+        query = query.replace('"', '')
+        query = query.replace("'", "")
+        
+        # Normalize whitespace (multiple spaces -> single space)
+        query = re.sub(r'\s+', ' ', query)
+        
+        # Strip leading/trailing whitespace
+        query = query.strip()
+        
+        return query
+
     def _load_index(self):
         if not self._index and self.full_path.exists():
             self._schema = self._create_schema()
@@ -104,6 +131,7 @@ class TantivyIndex(BaseModel):
             return {"hits": {"hits": [], "total": {"value": 0}}}
         
         # Parse query - use the index's parse_query method
+        query = self._clean_query(query)
         parsed_query = self._index.parse_query(query, ["name", "summary"])
         
         # Search
@@ -140,6 +168,7 @@ class TantivyIndex(BaseModel):
             return {"hits": {"hits": [], "total": {"value": 0}}}
         
         # Parse query - search only in summary field
+        query = self._clean_query(query)
         parsed_query = self._index.parse_query(query, ["summary"])
         
         # Search

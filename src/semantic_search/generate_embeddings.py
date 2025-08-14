@@ -12,7 +12,7 @@ from src.utils import (
     count_tokens,
     truncate_to_token_limit,
 )
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 import argparse
 
 parser = argparse.ArgumentParser(description="Generate embeddings for a graph.")
@@ -31,6 +31,13 @@ client = AzureOpenAI(
     api_key=AZURE_API_KEY,
     api_version=AZURE_API_VERSION,
 )
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+if OPENAI_API_KEY:
+    fallback_client = OpenAI(api_key=OPENAI_API_KEY)
+else:
+    fallback_client = None 
 
 EMBEDDINGS_MODEL = "text-embedding-3-small"
 EMBEDDINGS_DIR = f"data/graphs/embeddings/{EMBEDDINGS_MODEL}/{graph_name}"
@@ -61,7 +68,14 @@ for i in range(0, len(graph.nodes_df["summary"].tolist()), 100):
     try:
         response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
     except Exception as e:
-        raise RuntimeError(f"Error generating embeddings for batch starting at index {i}: {e}")
+        if fallback_client:
+            print(f"Azure client failed for batch {i}, trying fallback OpenAI client: {e}")
+            try:
+                response = fallback_client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
+            except Exception as fallback_e:
+                raise RuntimeError(f"Both Azure and OpenAI clients failed for batch starting at index {i}. Azure error: {e}. OpenAI error: {fallback_e}")
+        else:
+            raise RuntimeError(f"Error generating embeddings for batch starting at index {i}: {e}")
 
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     node_embeddings = torch.cat((node_embeddings, batch_embeddings), dim=0)
@@ -100,7 +114,17 @@ for i in range(0, len(questions), 100):
         continue
 
     batch = questions["question"].tolist()[i : i + 100]
-    response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
+    try:
+        response = client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
+    except Exception as e:
+        if fallback_client:
+            print(f"Azure client failed for question batch {i}, trying fallback OpenAI client: {e}")
+            try:
+                response = fallback_client.embeddings.create(input=batch, model=EMBEDDINGS_MODEL)
+            except Exception as fallback_e:
+                raise RuntimeError(f"Both Azure and OpenAI clients failed for question batch starting at index {i}. Azure error: {e}. OpenAI error: {fallback_e}")
+        else:
+            raise RuntimeError(f"Error generating embeddings for question batch starting at index {i}: {e}")
 
     batch_embeddings = torch.tensor([data.embedding for data in response.data])
     question_embeddings = torch.cat((question_embeddings, batch_embeddings), dim=0)
